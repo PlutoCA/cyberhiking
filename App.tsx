@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { LANDMARKS, INITIAL_GAME_STATE, SHOP_ITEMS, INITIAL_STATUS, ACHIEVEMENTS, LOCAL_EVENTS } from './constants';
+import { LANDMARKS, INITIAL_GAME_STATE, SHOP_ITEMS, INITIAL_STATUS, ACHIEVEMENTS, LOCAL_EVENTS, QUIZ_QUESTIONS } from './constants';
 import { GameState, WeatherType, PlayerStatus, Landmark, InventoryItem, RouteOption, Language, Season, ItemCategory, Achievement, RandomEvent, EventChoice } from './types';
 import { generateNarrative, getSurvivalAdvice } from './services/geminiService';
 import StatusBar from './components/StatusBar';
@@ -22,6 +22,10 @@ const App: React.FC = () => {
 
   const [currentEvent, setCurrentEvent] = useState<RandomEvent | null>(null);
   const [showAchievements, setShowAchievements] = useState(false);
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [currentQuizIndex, setCurrentQuizIndex] = useState(0);
+  const [quizAnswers, setQuizAnswers] = useState<number[]>([]);
+  const [showQuizResult, setShowQuizResult] = useState(false);
   const [activeShopCategory, setActiveShopCategory] = useState<ItemCategory>('food');
     const [shoppingCart, setShoppingCart] = useState<{ [key: string]: number }>({});
   
@@ -768,6 +772,169 @@ const App: React.FC = () => {
   if (gameState.phase === 'landing') {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-slate-950 p-6 relative hardware-accel overflow-hidden">
+        {showQuiz && !showQuizResult && (
+          <div className="fixed inset-0 z-[110] bg-black/90 backdrop-blur-xl flex items-center justify-center p-6 hardware-accel animate-in fade-in duration-300">
+            <div className="max-w-2xl w-full cyber-panel p-8 rounded-[2rem] border border-amber-500/30 flex flex-col max-h-[85vh]">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-black italic text-amber-400 uppercase tracking-tighter">❓ {gameState.language === 'zh' ? '户外知识问答' : 'Outdoor Knowledge Quiz'}</h2>
+                <button onClick={() => { setShowQuiz(false); setCurrentQuizIndex(0); setQuizAnswers([]); }} className="text-slate-500 hover:text-white transition-colors">✕</button>
+              </div>
+              <p className="text-xs text-slate-400 mb-4">{`${currentQuizIndex + 1}/${QUIZ_QUESTIONS.length}`}</p>
+              
+              <div className="flex-grow overflow-y-auto custom-scrollbar space-y-4 mb-4">
+                <h3 className="text-sm font-bold text-white">{QUIZ_QUESTIONS[currentQuizIndex].question[gameState.language]}</h3>
+                <div className="space-y-2">
+                  {QUIZ_QUESTIONS[currentQuizIndex].options.map((opt, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        const newAnswers = [...quizAnswers];
+                        newAnswers[currentQuizIndex] = idx;
+                        setQuizAnswers(newAnswers);
+                      }}
+                      className={`w-full text-left p-3 rounded-lg border transition-all text-xs ${
+                        quizAnswers[currentQuizIndex] === idx
+                          ? 'bg-amber-500/20 border-amber-500/60 text-amber-300'
+                          : 'bg-slate-900/50 border-white/10 text-slate-300 hover:border-amber-500/30'
+                      }`}
+                    >
+                      <span className="font-bold">{String.fromCharCode(65 + idx)}.</span> {opt[gameState.language]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    if (currentQuizIndex > 0) setCurrentQuizIndex(currentQuizIndex - 1);
+                  }}
+                  disabled={currentQuizIndex === 0}
+                  className="px-4 py-2 bg-slate-800 text-slate-400 rounded-lg text-xs font-bold disabled:opacity-50"
+                >
+                  {gameState.language === 'zh' ? '上一题' : 'Previous'}
+                </button>
+                {currentQuizIndex === QUIZ_QUESTIONS.length - 1 ? (
+                  <button
+                    onClick={() => setShowQuizResult(true)}
+                    className="flex-1 py-2 bg-amber-500 text-black rounded-lg text-xs font-bold hover:bg-amber-600 transition-all"
+                  >
+                    {gameState.language === 'zh' ? '提交答案' : 'Submit'}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setCurrentQuizIndex(currentQuizIndex + 1)}
+                    className="flex-1 py-2 bg-amber-500 text-black rounded-lg text-xs font-bold hover:bg-amber-600 transition-all"
+                  >
+                    {gameState.language === 'zh' ? '下一题' : 'Next'}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showQuizResult && (
+          <div className="fixed inset-0 z-[110] bg-black/90 backdrop-blur-xl flex items-center justify-center p-6 hardware-accel animate-in fade-in duration-300">
+            <div className="max-w-2xl w-full cyber-panel p-8 rounded-[2rem] border border-amber-500/30 flex flex-col max-h-[85vh]">
+              <h2 className="text-2xl font-black italic text-white uppercase tracking-tighter mb-6 text-center">{gameState.language === 'zh' ? '答题结果' : 'Quiz Results'}</h2>
+              
+              <div className="flex-grow overflow-y-auto custom-scrollbar space-y-4 mb-6">
+                {QUIZ_QUESTIONS.map((q, idx) => {
+                  const isCorrect = quizAnswers[idx] === q.correctAnswer;
+                  return (
+                    <div key={q.id} className={`p-4 rounded-lg border ${isCorrect ? 'bg-green-950/30 border-green-500/40' : 'bg-red-950/30 border-red-500/40'}`}>
+                      <p className="text-xs font-bold mb-2">
+                        {idx + 1}. {q.question[gameState.language]}
+                      </p>
+                      <p className={`text-xs mb-2 ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>
+                        {gameState.language === 'zh' ? '你的答案：' : 'Your answer: '} {q.options[quizAnswers[idx]][gameState.language]}
+                      </p>
+                      {!isCorrect && (
+                        <p className="text-xs text-amber-300 mb-2">
+                          {gameState.language === 'zh' ? '正确答案：' : 'Correct answer: '} {q.options[q.correctAnswer][gameState.language]}
+                        </p>
+                      )}
+                      <p className="text-xs text-slate-300 italic">{q.explanation[gameState.language]}</p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="text-center mb-4 space-y-3">
+                <p className="text-lg font-black text-white">
+                  {gameState.language === 'zh' ? '答题正确率：' : 'Accuracy: '}
+                  <span className="text-amber-400">{Math.round((quizAnswers.filter((a, i) => a === QUIZ_QUESTIONS[i].correctAnswer).length / QUIZ_QUESTIONS.length) * 100)}%</span>
+                </p>
+                {(() => {
+                  const accuracy = Math.round((quizAnswers.filter((a, i) => a === QUIZ_QUESTIONS[i].correctAnswer).length / QUIZ_QUESTIONS.length) * 100);
+                  let comment = { zh: '', en: '' };
+                  let emoji = '';
+                  let colorClass = '';
+                  
+                  if (accuracy === 100) {
+                    comment = { 
+                      zh: '🎉 完美无缺！你完全掌握了户外生存的核心知识。山神会眷顾有准备的人。', 
+                      en: '🎉 PERFECT! You have mastered outdoor survival knowledge. The Mountain God favors the prepared.' 
+                    };
+                    colorClass = 'text-emerald-400';
+                  } else if (accuracy >= 90) {
+                    comment = { 
+                      zh: '🏔️ 优秀！你的知识储备已经达到了经验丰富的登山者水平。', 
+                      en: '🏔️ EXCELLENT! Your knowledge rivals experienced mountaineers.' 
+                    };
+                    colorClass = 'text-green-400';
+                  } else if (accuracy >= 80) {
+                    comment = { 
+                      zh: '✅ 良好！你已具备基本的户外生存能力，但仍需加深理解。', 
+                      en: '✅ GOOD! You have basic survival skills but need deeper understanding.' 
+                    };
+                    colorClass = 'text-sky-400';
+                  } else if (accuracy >= 60) {
+                    comment = { 
+                      zh: '⚠️ 及格！你掌握了一些知识，但进山前还需更多准备和学习。', 
+                      en: '⚠️ PASS! You know some basics but need more preparation before entering mountains.' 
+                    };
+                    colorClass = 'text-yellow-400';
+                  } else if (accuracy >= 40) {
+                    comment = { 
+                      zh: '❌ 危险！你的知识储备不足以应对野外险境。请认真学习后再考虑户外活动。', 
+                      en: '❌ DANGEROUS! Your knowledge is insufficient for wilderness. Study before attempting outdoor activities.' 
+                    };
+                    colorClass = 'text-orange-400';
+                  } else {
+                    comment = { 
+                      zh: '🚫 致命！以你目前的知识水平进山，几乎等于自杀。秦岭圣山绝不留情于无知者。', 
+                      en: '🚫 FATAL! Entering mountains with your current knowledge is nearly suicidal. The Sacred Mountain shows no mercy to the ignorant.' 
+                    };
+                    colorClass = 'text-red-500';
+                  }
+                  
+                  return (
+                    <div className="bg-slate-900/50 border border-white/10 rounded-lg p-4">
+                      <p className={`text-sm font-bold ${colorClass} leading-relaxed`}>
+                        {comment[gameState.language]}
+                      </p>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              <button
+                onClick={() => {
+                  setShowQuizResult(false);
+                  setShowQuiz(false);
+                  setCurrentQuizIndex(0);
+                  setQuizAnswers([]);
+                }}
+                className="w-full py-3 bg-white text-black rounded-lg text-xs font-bold hover:bg-slate-200 transition-all"
+              >
+                {gameState.language === 'zh' ? '关闭' : 'Close'}
+              </button>
+            </div>
+          </div>
+        )}
+        
         {showAchievements && (
           <div className="fixed inset-0 z-[110] bg-black/90 backdrop-blur-xl flex items-center justify-center p-6 hardware-accel animate-in fade-in duration-300">
             <div className="max-w-2xl w-full cyber-panel p-8 rounded-[2rem] border border-sky-500/30 flex flex-col max-h-[85vh]">
@@ -806,7 +973,10 @@ const App: React.FC = () => {
                ))}
              </div>
              <button onClick={() => setGameState(p => ({ ...p, phase: 'shopping' }))} className="w-full py-4 bg-white text-black font-black rounded-2xl uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-95 transition-all text-sm">{t.prepare}</button>
-             <button onClick={() => setShowAchievements(true)} className="w-full py-3 bg-slate-900 border border-sky-500/30 text-sky-400 font-black rounded-2xl uppercase tracking-[0.2em] hover:bg-slate-800 transition-all text-xs">🏆 {t.achievementList}</button>
+             <div className="grid grid-cols-2 gap-2">
+               <button onClick={() => setShowAchievements(true)} className="py-3 bg-slate-900 border border-sky-500/30 text-sky-400 font-black rounded-2xl uppercase tracking-[0.2em] hover:bg-slate-800 transition-all text-xs">🏆 {gameState.language === 'zh' ? '成就' : 'Achievements'}</button>
+               <button onClick={() => { setCurrentQuizIndex(0); setQuizAnswers([]); setShowQuiz(true); }} className="py-3 bg-slate-900 border border-amber-500/30 text-amber-400 font-black rounded-2xl uppercase tracking-[0.2em] hover:bg-slate-800 transition-all text-xs">❓ {gameState.language === 'zh' ? '知识问答' : 'Quiz'}</button>
+             </div>
           </div>
         </div>
       </div>

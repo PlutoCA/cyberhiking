@@ -1,5 +1,5 @@
 
-import { Landmark, WeatherType, PlayerStatus, InventoryItem, GameState, Language, Season, Achievement, RandomEvent } from './types';
+import { Landmark, WeatherType, PlayerStatus, InventoryItem, GameState, Language, Season, Achievement, RandomEvent, QuizQuestion } from './types';
 
 export const ACHIEVEMENTS: Achievement[] = [
   { id: 'a1', name: { zh: '敬畏自然', en: 'Respect Nature' }, description: { zh: '成功完成穿越，明白禁区的危险', en: 'Finish the trail' }, unlocked: false, category: 'exploration', icon: '🛡️' },
@@ -151,7 +151,7 @@ export const INITIAL_GAME_STATE: GameState = {
   ],
   log: [],
   gameMessage: { zh: '', en: '' },
-  gold: 5000,
+  gold: 4000,
   merit: 0,
   peopleSaved: 0,
   checkInCount: 0,
@@ -393,3 +393,137 @@ export const LOCAL_EVENTS: RandomEvent[] = [
     ]
   }
 ];
+
+export const QUIZ_QUESTIONS: QuizQuestion[] = [
+  {
+    id: 'q1',
+    question: { zh: '鳌太线穿越的全程距离大约有多长？', en: 'What is the approximate total distance of the Aotai Trail crossing?' },
+    options: [
+      { zh: '40公里直线距离，实际徒步170公里', en: '40km direct distance, 170km actual hiking' },
+      { zh: '80公里直线距离，实际徒步200公里', en: '80km direct distance, 200km actual hiking' },
+      { zh: '30公里直线距离，实际徒步100公里', en: '30km direct distance, 100km actual hiking' },
+      { zh: '120公里直线距离，实际徒步250公里', en: '120km direct distance, 250km actual hiking' }
+    ],
+    correctAnswer: 0,
+    explanation: { zh: '鳌太线从塘口村出发，穿越40公里，跨越17座3400米以上的高峰。由于山路崎岖蜿蜒，实际徒步距离达到170公里。', en: 'The Aotai Trail stretches 40km direct but requires 170km of actual hiking due to steep terrain and 17 peaks over 3400m.' },
+    category: 'distance'
+  },
+  {
+    id: 'q2',
+    question: { zh: '在鳌太线遇到秦岭金丝猴应该怎么做？', en: 'What should you do if you encounter Qinling golden monkeys on the trail?' },
+    options: [
+      { zh: '保持距离并缓慢后退，不要做出突然动作', en: 'Keep distance and retreat slowly, avoid sudden movements' },
+      { zh: '立即跑开，远离它们', en: 'Run away immediately' },
+      { zh: '拿出食物投喂，和它们交朋友', en: 'Offer food and try to befriend them' },
+      { zh: '发出大声噪音驱赶它们', en: 'Make loud noises to drive them away' }
+    ],
+    correctAnswer: 0,
+    explanation: { zh: '秦岭金丝猴通常温和，但需要保持尊重的距离。突然动作可能会激惹它们。投喂会导致它们依赖人类食物并变得具有攻击性。', en: 'Golden monkeys are generally peaceful but require respectful distance. Avoid sudden movements. Feeding them causes dependency and aggression.' },
+    category: 'wildlife'
+  },
+  {
+    id: 'q3',
+    question: { zh: '高原反应的主要症状不包括下列哪一项？', en: 'Which is NOT a typical symptom of altitude sickness?' },
+    options: [
+      { zh: '头痛、呕吐、失眠', en: 'Headache, vomiting, insomnia' },
+      { zh: '皮肤瘙痒和皮疹', en: 'Itching skin and rash' },
+      { zh: '呼吸困难、胸闷', en: 'Shortness of breath, chest tightness' },
+      { zh: '疲劳和虚弱', en: 'Fatigue and weakness' }
+    ],
+    correctAnswer: 1,
+    explanation: { zh: '高原反应主要由缺氧引起，症状包括头痛、呕吐、失眠、呼吸困难和疲劳。皮肤瘙痒和皮疹与高反无直接关系。', en: 'Altitude sickness is caused by oxygen deprivation, causing headache, vomiting, insomnia, and dyspnea. Skin reactions are unrelated.' },
+    category: 'altitude'
+  },
+  {
+    id: 'q4',
+    question: { zh: '治疗高原反应的常用药物不包括下列哪一种？', en: 'Which drug is NOT used for altitude sickness treatment?' },
+    options: [
+      { zh: '乙酰唑胺（Diamox）', en: 'Acetazolamide (Diamox)' },
+      { zh: '布洛芬（Ibuprofen）', en: 'Ibuprofen' },
+      { zh: '红景天（Rhodiola）', en: 'Rhodiola' },
+      { zh: '阿司匹林（Aspirin）', en: 'Aspirin' }
+    ],
+    correctAnswer: 3,
+    explanation: { zh: '乙酰唑胺是预防和治疗高反的首选药物，布洛芬缓解头痛，红景天增强耐缺氧能力。阿司匹林主要用于心血管疾病，对高反无特殊效果。', en: 'Acetazolamide is the gold standard for altitude prevention, Ibuprofen relieves headache, Rhodiola enhances oxygen adaptation. Aspirin is for cardiovascular issues, not altitude sickness.' },
+    category: 'altitude'
+  },
+  {
+    id: 'q5',
+    question: { zh: '失温症的早期症状（第一阶段）主要表现为？', en: 'What are the early symptoms of hypothermia (stage 1)?' },
+    options: [
+      { zh: '持续颤抖、意识清醒但行为迟缓', en: 'Shivering, conscious but sluggish movement' },
+      { zh: '意识模糊、嘴唇发绀、停止颤抖', en: 'Confusion, cyanotic lips, no shivering' },
+      { zh: '意识丧失、脉搏极弱', en: 'Unconscious, barely detectable pulse' },
+      { zh: '心跳停止、瞳孔放大', en: 'Cardiac arrest, dilated pupils' }
+    ],
+    correctAnswer: 0,
+    explanation: { zh: '失温第一阶段（32-35°C）表现为持续颤抖、意识清醒但行为变得迟缓、说话含糊。第二阶段停止颤抖。第三阶段意识丧失。及早识别关乎生死。', en: 'Stage 1 hypothermia (32-35°C): persistent shivering, clear consciousness but sluggish movement. Stage 2: no shivering, confusion. Stage 3: unconscious. Early recognition is lifesaving.' },
+    category: 'hypothermia'
+  },
+  {
+    id: 'q6',
+    question: { zh: '遭遇失温的野外急救方法不包括？', en: 'Which is NOT appropriate first aid for hypothermia?' },
+    options: [
+      { zh: '移至避风暖和的地方，脱掉湿衣物', en: 'Move to sheltered warm area, remove wet clothing' },
+      { zh: '给予温热的饮料和高热量食物', en: 'Provide warm drinks and high-calorie food' },
+      { zh: '立即进行剧烈按摩和快速体动活动', en: 'Vigorous massage and rapid movement' },
+      { zh: '缓慢加温，避免急速回温导致心律不齐', en: 'Slow rewarming to prevent cardiac arrhythmia' }
+    ],
+    correctAnswer: 2,
+    explanation: { zh: '失温患者禁止剧烈活动和按摩，因为会使冷血流向心脏引发致命的心律不齐。正确做法是缓慢加温、保持温暖安静、监测生命体征。', en: 'Never use vigorous exercise or massage on hypothermia patients as this drives cold blood to the heart causing fatal arrhythmia. Slow rewarming in a warm, quiet environment is essential.' },
+    category: 'hypothermia'
+  },
+  {
+    id: 'q7',
+    question: { zh: '长距离山地徒步中，防止足部水泡的最重要因素是？', en: 'What is the most important factor to prevent foot blisters on long hikes?' },
+    options: [
+      { zh: '穿着透气的棉质袜子', en: 'Wear breathable cotton socks' },
+      { zh: '及时更换汗湿的袜子，保持足部干燥', en: 'Change wet socks promptly to keep feet dry' },
+      { zh: '在脚上涂抹防水油脂', en: 'Apply waterproof grease on feet' },
+      { zh: '频繁检查脚部皮肤', en: 'Frequent foot inspections' }
+    ],
+    correctAnswer: 1,
+    explanation: { zh: '足部水泡由皮肤摩擦和潮湿引起。最重要的是保持足部干燥——及时更换汗湿的袜子，选择排汗性能好的专业登山袜。干燥的足部不易起泡。', en: 'Blisters result from friction and moisture. The key is keeping feet dry by changing damp socks promptly and using moisture-wicking hiking socks. Dry feet resist blistering.' },
+    category: 'equipment'
+  },
+  {
+    id: 'q8',
+    question: { zh: '在山区突遇暴风雨时，下列哪项做法是错误的？', en: 'Which action is WRONG during sudden thunderstorm in mountains?' },
+    options: [
+      { zh: '远离高处和孤立树木，寻找低地避险', en: 'Move away from heights and isolated trees, find low ground' },
+      { zh: '蹲着或坐着，脚并拢以减少接地面积', en: 'Crouch or sit with feet together to minimize ground contact' },
+      { zh: '躲在山洞或树下等待暴雨过去', en: 'Take shelter in cave or under trees waiting for storm to pass' },
+      { zh: '拆开背包金属部件并远离它们', en: 'Remove metal objects and move away from them' }
+    ],
+    correctAnswer: 2,
+    explanation: { zh: '山洞可能集聚静电导致触电。树下容易被闪电击中。正确做法是蹲在低地、脚并拢、避开高处和金属物品。山区闪电致死率高达90%，必须高度重视。', en: 'Caves trap static electricity; trees attract lightning. Correct: crouch on low ground with feet together, avoid heights and metal. Mountain lightning has 90% fatality rate—take it seriously.' },
+    category: 'weather'
+  },
+  {
+    id: 'q9',
+    question: { zh: '在无医疗救助的山区，发现同伴骨折应该如何处理？', en: 'How should you handle a companion\'s fracture in remote mountains with no medical aid?' },
+    options: [
+      { zh: '立即做简单夹板固定，用绷带或布条绑扎，避免活动', en: 'Immediately immobilize with makeshift splint, wrap with bandage, prevent movement' },
+      { zh: '让患者继续行走以保持血流，边走边恢复', en: 'Keep patient walking to maintain circulation' },
+      { zh: '频繁活动骨折处以检查严重程度', en: 'Move the fracture repeatedly to assess severity' },
+      { zh: '给予止痛药后继续行进', en: 'Give painkillers and continue hiking' }
+    ],
+    correctAnswer: 0,
+    explanation: { zh: '山区骨折的正确处理：1)停止活动；2)用木板、登山杖、背包等做简易夹板；3)用绷带固定；4)抬高患肢；5)冷敷减肿；6)安排转移至医疗点。继续行走会加重伤情。', en: 'Mountain fracture protocol: 1) Stop activity 2) Immobilize with makeshift splint (wood, trekking pole) 3) Wrap with bandage 4) Elevate limb 5) Apply cold 6) Arrange evacuation. Walking worsens the injury.' },
+    category: 'firstaid'
+  },
+  {
+    id: 'q10',
+    question: { zh: '在海拔3500米以上的高山露营，为了节省燃料你应该？', en: 'At 3500m+ altitude camping to conserve fuel, you should?' },
+    options: [
+      { zh: '少喝热水，依靠自身体热保暖', en: 'Drink less warm water, rely on body heat' },
+      { zh: '增加热水摄入量，高山缺氧需要更多补水和热量', en: 'Increase warm water and food intake for altitude compensation' },
+      { zh: '只吃干粮，不进行加热以节省燃料', en: 'Eat only dry food to save fuel' },
+      { zh: '缩短睡眠时间以节省热源', en: 'Reduce sleep to conserve heat sources' }
+    ],
+    correctAnswer: 1,
+    explanation: { zh: '高山缺氧导致新陈代谢加快，身体需要更多热量和水分。充足的热水和温热食物能维持体温、促进血液循环、减轻高反。节食和脱水反而加速失温和高反恶化。', en: 'Altitude hypoxia accelerates metabolism, requiring more calories and hydration. Warm drinks and food maintain body temperature, improve circulation, mitigate altitude sickness. Undereating hastens hypothermia and AMS.' },
+    category: 'nutrition'
+  }
+];
+

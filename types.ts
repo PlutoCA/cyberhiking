@@ -36,6 +36,15 @@ export interface Achievement {
   icon: string;
 }
 
+export interface QuizQuestion {
+  id: string;
+  question: { zh: string; en: string };
+  options: Array<{ zh: string; en: string }>;
+  correctAnswer: number; // 正确答案的索引
+  explanation: { zh: string; en: string };
+  category: 'distance' | 'wildlife' | 'altitude' | 'hypothermia' | 'equipment' | 'weather' | 'firstaid' | 'navigation' | 'nutrition' | 'emergency';
+}
+
 export interface Landmark {
   id: string;
   name: { zh: string; en: string };
