@@ -215,13 +215,83 @@ const App: React.FC = () => {
     return [...filteredEvents].sort(() => Math.random() - 0.5)[0];
   }, [gameState, hasItem]);
 
-  const checkGameOver = useCallback((status: PlayerStatus): { isOver: boolean, message: string } => {
-    if (status.health <= 0) return { isOver: true, message: `${t.deathReason.health} [生命值: ${status.health.toFixed(1)}, 体温: ${status.bodyTemp.toFixed(1)}℃, 水分: ${status.hydration.toFixed(1)}%, 体力: ${status.stamina.toFixed(1)}%]` };
-    if (status.bodyTemp < 34.0) return { isOver: true, message: `${t.deathReason.bodyTemp} [体温: ${status.bodyTemp.toFixed(1)}℃, 生命值: ${status.health.toFixed(1)}, 水分: ${status.hydration.toFixed(1)}%, 体力: ${status.stamina.toFixed(1)}%]` };
-    if (status.hydration <= 0) return { isOver: true, message: `${t.deathReason.hydration} [水分: ${status.hydration.toFixed(1)}%, 生命值: ${status.health.toFixed(1)}, 体温: ${status.bodyTemp.toFixed(1)}℃, 体力: ${status.stamina.toFixed(1)}%]` };
-    if (status.stamina <= 0 && status.health <= 2) return { isOver: true, message: `${t.deathReason.stamina} [体力: ${status.stamina.toFixed(1)}%, 生命值: ${status.health.toFixed(1)}, 体温: ${status.bodyTemp.toFixed(1)}℃, 水分: ${status.hydration.toFixed(1)}%]` };
+  const checkGameOver = useCallback((status: PlayerStatus, prevStatus?: PlayerStatus, currentEvent?: RandomEvent): { isOver: boolean, message: string, cause?: string } => {
+    let cause: string | undefined;
+    let message = '';
+    
+    // 检查死亡原因并构建链条
+    if (status.health <= 0) {
+      if (prevStatus && prevStatus.health > 0 && currentEvent) {
+        // 事件导致的死亡
+        cause = `${currentEvent.title.zh} → 伤害致命 → 死亡`;
+      } else if (status.conditions.includes('外伤')) {
+        cause = '创伤恶化 → 失血过多 → 死亡';
+      }
+      message = `${t.deathReason.health} [生命值: ${status.health.toFixed(1)}, 体温: ${status.bodyTemp.toFixed(1)}℃, 水分: ${status.hydration.toFixed(1)}%, 体力: ${status.stamina.toFixed(1)}%]`;
+      return { isOver: true, message, cause };
+    }
+    
+    if (status.bodyTemp < 34.0) {
+      if (prevStatus && prevStatus.bodyTemp >= 34.0) {
+        // 新引发的失温
+        if (gameState.weather === WeatherType.BLIZZARD) {
+          cause = `暴风雪环境 → 体温急剧下降 → 失温性休克 → 死亡`;
+        } else if (gameState.weather === WeatherType.SNOWY) {
+          cause = `大雪覆盖 → 无法保温 → 严重失温 → 死亡`;
+        } else if (currentEvent) {
+          cause = `${currentEvent.title.zh} → 体温丧失 → 失温 → 死亡`;
+        } else {
+          cause = `长期暴露 → 体温持续下降 → 失温性死亡`;
+        }
+      }
+      message = `${t.deathReason.bodyTemp} [体温: ${status.bodyTemp.toFixed(1)}℃, 生命值: ${status.health.toFixed(1)}, 水分: ${status.hydration.toFixed(1)}%, 体力: ${status.stamina.toFixed(1)}%]`;
+      return { isOver: true, message, cause };
+    }
+    
+    if (status.hydration <= 0) {
+      if (prevStatus && prevStatus.hydration > 0) {
+        if (currentEvent?.title.zh.includes('幻觉')) {
+          cause = `高原缺氧 → 幻觉导向 → 无法补水 → 脱水昏迷`;
+        } else {
+          cause = `补给不足 → 长期脱水 → 器官衰竭 → 死亡`;
+        }
+      }
+      message = `${t.deathReason.hydration} [水分: ${status.hydration.toFixed(1)}%, 生命值: ${status.health.toFixed(1)}, 体温: ${status.bodyTemp.toFixed(1)}℃, 体力: ${status.stamina.toFixed(1)}%]`;
+      return { isOver: true, message, cause };
+    }
+    
+    if (status.stamina <= 0 && status.health <= 2) {
+      if (prevStatus && prevStatus.stamina > 0) {
+        if (status.conditions.includes('高反')) {
+          cause = `高原反应 → 体力严重消耗 → 缺氧晕迷 → 死亡`;
+        } else if (status.weight > status.maxWeight) {
+          cause = `严重超重 → 过度疲劳 → 心脏衰竭 → 死亡`;
+        } else {
+          cause = `连续行军 → 体力耗尽 → 精力衰竭 → 倒地不起`;
+        }
+      }
+      message = `${t.deathReason.stamina} [体力: ${status.stamina.toFixed(1)}%, 生命值: ${status.health.toFixed(1)}, 体温: ${status.bodyTemp.toFixed(1)}℃, 水分: ${status.hydration.toFixed(1)}%]`;
+      return { isOver: true, message, cause };
+    }
+    
     return { isOver: false, message: '' };
-  }, [t.deathReason]);
+  }, [t.deathReason, gameState.weather]);
+
+  const createStatusAlerts = useCallback((prev: PlayerStatus, next: PlayerStatus, lang: Language) => {
+    const alerts: string[] = [];
+    const newConditions = next.conditions.filter(c => !prev.conditions.includes(c));
+
+    newConditions.forEach(cond => {
+      if (cond === '失温') alerts.push(lang === 'zh' ? `[DANGER] 体温降至 ${next.bodyTemp.toFixed(1)}℃，出现失温，立即保暖/扎营。` : `[DANGER] Body temp dropped to ${next.bodyTemp.toFixed(1)}°C. Hypothermia detected, warm up or camp now.`);
+      if (cond === '脱水') alerts.push(lang === 'zh' ? `[DANGER] 水分仅剩 ${next.hydration.toFixed(1)}%，出现脱水，立刻补水。` : `[DANGER] Hydration at ${next.hydration.toFixed(1)}%. Dehydration detected, rehydrate now.`);
+      if (cond === '外伤') alerts.push(lang === 'zh' ? `[DANGER] 遭受外伤，健康会持续下降，尽快处理伤口。` : `[DANGER] Injury sustained, health will keep dropping. Treat the wound ASAP.`);
+      if (cond === '高反') alerts.push(lang === 'zh' ? `[DANGER] 出现高反症状，放慢速度或使用氧气瓶。` : `[DANGER] Altitude sickness detected. Slow down or use oxygen.`);
+    });
+
+    if (prev.health > 20 && next.health <= 20) alerts.push(lang === 'zh' ? `[DANGER] 生命值跌至 ${next.health.toFixed(1)}，注意保命操作。` : `[DANGER] Health dropped to ${next.health.toFixed(1)}. Focus on survival actions.`);
+
+    return alerts;
+  }, []);
 
   const addLog = useCallback((msg: string) => {
     setGameState(p => {
@@ -239,9 +309,13 @@ const App: React.FC = () => {
     }
     let newProgress = gameState.progress + 1;
     let nextLandmarkIndex = gameState.currentLandmarkIndex;
+    let isReachedFinalLandmark = false;
+    
     if (newProgress >= 3) {
       newProgress = 0;
       nextLandmarkIndex = Math.min(LANDMARKS.length - 1, gameState.currentLandmarkIndex + 1);
+      // 判断是否到达终点（已推进到最后一个地标）
+      isReachedFinalLandmark = nextLandmarkIndex === LANDMARKS.length - 1;
     }
 
     const altitudeWeight = LANDMARKS[nextLandmarkIndex].elevation > 3000 ? 0.75 : 0.25;
@@ -259,25 +333,33 @@ const App: React.FC = () => {
 
     const nextStatus = updateStatus({ ...gameState.status, conditions: newConditions }, gameState.weather, option.timeCost, 'active');
     nextStatus.health -= healthPenalty;
-    const gameOver = checkGameOver(nextStatus);
+    const alerts = createStatusAlerts(gameState.status, nextStatus, gameState.language);
+    alerts.forEach(alert => addLog(alert));
+    const gameOver = checkGameOver(nextStatus, gameState.status);
 
-    generateNarrative({ ...gameState, status: nextStatus, weather: nextWeather }, LANDMARKS[nextLandmarkIndex], option.label[gameState.language])
-      .then(narrative => addLog(`[D${gameState.day}] ${narrative}`));
-
+    // 先判断是否死亡，再判断是否通关
     if (gameOver.isOver) {
-      const gs = { ...gameState, phase: 'gameover', status: nextStatus, gameMessage: { zh: gameOver.message, en: gameOver.message } };
+      const deathChain = gameOver.cause ? [{ zh: gameOver.cause, en: gameOver.cause }] : [];
+      const gs = { ...gameState, phase: 'gameover', status: nextStatus, currentLandmarkIndex: nextLandmarkIndex, progress: newProgress, gameMessage: { zh: gameOver.message, en: gameOver.message }, deathCauseChain: deathChain };
       setGameState({ ...gs, achievements: settleAchievements(gs as GameState) } as GameState);
-    } else if (nextLandmarkIndex === LANDMARKS.length - 1 && gameState.currentLandmarkIndex !== LANDMARKS.length - 1 && newProgress === 0) {
-      const gs = { ...gameState, phase: 'gameover', status: nextStatus, currentLandmarkIndex: nextLandmarkIndex, gameMessage: { zh: "厚畛子的灯火就在前方，你终于完成了鳌太穿越！", en: "THE LIGHTS OF HOUZHENZI! MISSION COMPLETE!" } };
+    } else if (isReachedFinalLandmark) {
+      // 到达最后一个地标（厚畛子）则游戏胜利
+      const gs = { ...gameState, phase: 'gameover', status: nextStatus, currentLandmarkIndex: nextLandmarkIndex, progress: newProgress, gameMessage: { zh: "厚畛子的灯火就在前方，你终于完成了鳌太穿越！", en: "THE LIGHTS OF HOUZHENZI! MISSION COMPLETE!" } };
       setGameState({ ...gs, achievements: settleAchievements(gs as GameState) } as GameState);
     } else {
+      // 检查是否到达新地标
+      const shouldAddStory = nextLandmarkIndex !== gameState.currentLandmarkIndex;
+      const isStillSameLandmark = nextLandmarkIndex === gameState.currentLandmarkIndex && newProgress > 0;
+      
+      // 生成AI叙事（仅当到达新地标时）
+      if (shouldAddStory) {
+        generateNarrative({ ...gameState, status: nextStatus, weather: nextWeather }, LANDMARKS[nextLandmarkIndex], option.label[gameState.language])
+          .then(narrative => addLog(`[D${gameState.day}] ${narrative}`));
+      }
+      
       setGameState(p => {
           const newDay = p.day + Math.floor((p.time + option.timeCost) / 24);
           if (isNight && !hasItem('g4')) addLog(`[DANGER] ${t.noHeadlamp}`);
-          
-          // 检查是否到达新地标，如果是则添加地标故事
-          const shouldAddStory = nextLandmarkIndex !== p.currentLandmarkIndex;
-          const landmarkStory = shouldAddStory ? triggerLandmarkStory(nextLandmarkIndex) : '';
           
           const newState = {
             ...p,
@@ -290,9 +372,19 @@ const App: React.FC = () => {
             achievements: settleAchievements({ ...p, status: nextStatus, day: newDay } as GameState)
           };
           
-          // 如果有地标故事，则添加到日志
-          if (landmarkStory) {
-            setTimeout(() => addLog(landmarkStory), 1000); // 延迟添加地标故事，让玩家先看到路线叙事
+          // 到达新地标时添加地标故事
+          if (shouldAddStory) {
+            const landmarkStory = triggerLandmarkStory(nextLandmarkIndex);
+            if (landmarkStory) {
+              setTimeout(() => addLog(landmarkStory), 1200);
+            }
+          }
+          
+          // 在同一地标推进时输出进度提示（仅首次）
+          if (isStillSameLandmark && newProgress === 1) {
+            setTimeout(() => addLog(`[SYSTEM] ${gameState.language === 'zh' ? `开始推进路段，到达 3/3 将抵达下一地标。` : `Started segment progress. Reach 3/3 to move to next landmark.`}`), 100);
+          } else if (isStillSameLandmark) {
+            setTimeout(() => addLog(`[SYSTEM] ${gameState.language === 'zh' ? `已推进 ${newProgress}/3` : `Progress ${newProgress}/3`}`), 100);
           }
           
           return newState;
@@ -303,8 +395,25 @@ const App: React.FC = () => {
   };
 
   const handleEventChoice = (choice: EventChoice) => {
+    let alerts: string[] = [];
     setGameState(p => {
       let newInventory = [...p.inventory];
+      
+      // 消耗所需物资
+      if (choice.requiredItems) {
+        choice.requiredItems.forEach(required => {
+          const item = newInventory.find(i => i.id === required.itemId);
+          if (item && item.quantity >= required.quantity) {
+            item.quantity -= required.quantity;
+            // 如果数量为0，移除该物品
+            if (item.quantity === 0) {
+              newInventory = newInventory.filter(i => i.id !== required.itemId);
+            }
+          }
+        });
+      }
+      
+      // 获得奖励物资
       if (choice.rewardItems) {
         choice.rewardItems.forEach(reward => {
           const base = SHOP_ITEMS.find(i => i.id === reward.itemId);
@@ -331,10 +440,12 @@ const App: React.FC = () => {
       };
       
       nextStatus.weight = Number(newInventory.reduce((acc, i) => acc + (i.weight * i.quantity), 2.0).toFixed(2));
-      const gameOver = checkGameOver(nextStatus);
+      alerts = createStatusAlerts(p.status, nextStatus, p.language);
+      const gameOver = checkGameOver(nextStatus, p.status, currentEvent || undefined);
 
       if (gameOver.isOver) {
-        return { ...p, phase: 'gameover', status: nextStatus, gameMessage: { zh: gameOver.message, en: gameOver.message } };
+        const deathChain = gameOver.cause ? [{ zh: gameOver.cause, en: gameOver.cause }] : [];
+        return { ...p, phase: 'gameover', status: nextStatus, gameMessage: { zh: gameOver.message, en: gameOver.message }, deathCauseChain: deathChain };
       }
 
       const newLogs = [...p.log, `[EVENT] ${choice.log[p.language]}`].slice(-LOG_LIMIT);
@@ -349,6 +460,7 @@ const App: React.FC = () => {
         achievements: settleAchievements({ ...p, status: nextStatus, merit: p.merit + choice.meritImpact, peopleSaved: p.peopleSaved + (choice.meritImpact >= 100 ? 1 : 0) } as GameState)
       };
     });
+    alerts.forEach(alert => addLog(alert));
     setCurrentEvent(null);
   };
 
@@ -421,14 +533,15 @@ const App: React.FC = () => {
     } else {
       addLog(`[SYSTEM] 这里的乱石堆中除了积雪和枯草，没有任何发现。`);
     }
-    setGameState(p => {
-      const nextStatus = updateStatus(p.status, p.weather, 1, 'active');
-      return {
-        ...p,
-        time: (p.time + 1) % 24,
-        status: nextStatus
-      };
-    });
+    const prevStatus = gameState.status;
+    const nextStatus = updateStatus(prevStatus, gameState.weather, 1, 'active');
+    const alerts = createStatusAlerts(prevStatus, nextStatus, gameState.language);
+    alerts.forEach(alert => addLog(alert));
+    setGameState(p => ({
+      ...p,
+      time: (p.time + 1) % 24,
+      status: nextStatus
+    }));
   };
 
   const handleAskGuide = async () => {
@@ -446,11 +559,15 @@ const App: React.FC = () => {
 
   const handleSleep = () => {
     const hours = 8;
-    const nextStatus = updateStatus(gameState.status, gameState.weather, hours, 'sleep');
-    const gameOver = checkGameOver(nextStatus);
+    const prevStatus = gameState.status;
+    const nextStatus = updateStatus(prevStatus, gameState.weather, hours, 'sleep');
+    const alerts = createStatusAlerts(prevStatus, nextStatus, gameState.language);
+    alerts.forEach(alert => addLog(alert));
+    const gameOver = checkGameOver(nextStatus, prevStatus);
 
     if (gameOver.isOver) {
-      setGameState(p => ({ ...p, phase: 'gameover', status: nextStatus, gameMessage: { zh: gameOver.message, en: gameOver.message } }));
+      const deathChain = gameOver.cause ? [{ zh: gameOver.cause, en: gameOver.cause }] : [];
+      setGameState(p => ({ ...p, phase: 'gameover', status: nextStatus, gameMessage: { zh: gameOver.message, en: gameOver.message }, deathCauseChain: deathChain }));
     } else {
       setGameState(p => ({
         ...p,
@@ -465,12 +582,16 @@ const App: React.FC = () => {
 
   const handleRest = () => {
     const hours = 2;
-    const nextStatus = updateStatus(gameState.status, gameState.weather, hours, 'passive');
+    const prevStatus = gameState.status;
+    const nextStatus = updateStatus(prevStatus, gameState.weather, hours, 'passive');
     nextStatus.stamina = Math.min(100, nextStatus.stamina + 20);
-    const gameOver = checkGameOver(nextStatus);
+    const alerts = createStatusAlerts(prevStatus, nextStatus, gameState.language);
+    alerts.forEach(alert => addLog(alert));
+    const gameOver = checkGameOver(nextStatus, prevStatus);
 
     if (gameOver.isOver) {
-      setGameState(p => ({ ...p, phase: 'gameover', status: nextStatus, gameMessage: { zh: gameOver.message, en: gameOver.message } }));
+      const deathChain = gameOver.cause ? [{ zh: gameOver.cause, en: gameOver.cause }] : [];
+      setGameState(p => ({ ...p, phase: 'gameover', status: nextStatus, gameMessage: { zh: gameOver.message, en: gameOver.message }, deathCauseChain: deathChain }));
     } else {
       setGameState(p => ({
         ...p,
@@ -565,7 +686,7 @@ const App: React.FC = () => {
   const triggerLandmarkStory = useCallback((landmarkIndex: number) => {
     const landmark = LANDMARKS[landmarkIndex];
     const landmarkStories = {
-       0: `[STORY] ${gameState.language === 'zh' ? '塘口村是鳌太线的传统起点，许多徒步者在这里做最后的补给和准备。村里的老人常说："鳌太无情，山神不留任性之人"。' : 'Tangkou Village is the traditional starting point of the Aotai Trail, where many hikers make their final preparations. The elderly villagers often say: "Aotai has no mercy, the mountain god does not spare the reckless."'} Rocket League`,
+       0: `[STORY] ${gameState.language === 'zh' ? '塘口村是鳌太线的传统起点，许多徒步者在这里做最后的补给和准备。村里的老人常说："鳌太无情，山神不留任性之人"。' : 'Tangkou Village is the traditional starting point of the Aotai Trail, where many hikers make their final preparations. The elderly villagers often say: "Aotai has no mercy, the mountain god does not spare the reckless."'}`,
        1: `[STORY] ${gameState.language === 'zh' ? '海拔2800米的高度标志着你正式进入了秦岭腹地。这里的空气开始变得稀薄，原始森林展现出原始而神秘的面貌。' : 'At 2800 meters elevation, you officially enter the heart of the Qinling Mountains. The air begins to thin, and the primeval forest reveals its primitive and mysterious appearance.'}`,
        2: `[STORY] ${gameState.language === 'zh' ? '盆景园以其独特的高山灌丛景观闻名，这里的植物因长期受风雪侵蚀而形成奇特的造型，宛如天然盆景。' : 'Sobing Garden is famous for its unique alpine shrub landscape. The plants here have formed peculiar shapes due to long-term erosion by wind and snow, resembling natural bonsai.'}`,
        3: `[STORY] ${gameState.language === 'zh' ? '荞麦梁因其形状酷似荞麦而得名，这里是整个鳌太线上最为险峻的地段之一，稍有不慎就可能坠入万丈深渊。' : 'Buckwheat Ridge got its name from its resemblance to buckwheat. This is one of the most dangerous sections of the entire Aotai Trail, where a slight misstep could lead to a fatal fall.'}`,
@@ -742,7 +863,7 @@ const App: React.FC = () => {
 
   return (
     <div className={`h-screen w-full flex flex-col md:flex-row bg-slate-950 font-mono hardware-accel overflow-hidden ${isNight ? 'brightness-90' : ''}`}>
-      {currentEvent && <EventDialog event={currentEvent} language={gameState.language} onChoice={handleEventChoice} />}
+      {currentEvent && <EventDialog event={currentEvent} language={gameState.language} inventory={gameState.inventory} onChoice={handleEventChoice} />}
       
       {showAchievements && (
         <div className="fixed inset-0 z-[110] bg-black/90 backdrop-blur-xl flex items-center justify-center p-6 hardware-accel animate-in fade-in duration-300">
@@ -808,7 +929,14 @@ const App: React.FC = () => {
         </div>
         <div className="flex-grow cyber-panel rounded-2xl p-5 overflow-y-auto custom-scrollbar flex flex-col gap-2">
            {gameState.log.map((l, i) => (
-             <div key={i} className={`text-[11px] leading-relaxed pl-3 border-l-2 transition-all duration-500 animate-in slide-in-from-left-1 ${l.includes('[DANGER]') ? 'text-red-400 border-red-900' : l.startsWith('[SYSTEM]') ? 'text-sky-400 border-sky-900' : l.startsWith('[EVENT]') ? 'text-amber-400 border-amber-900' : 'text-slate-500 border-slate-800'}`}>
+             <div key={i} className={`text-[11px] leading-relaxed pl-3 border-l-2 transition-all duration-500 animate-in slide-in-from-left-1 ${
+               l.includes('[DANGER]') ? 'text-red-400 border-red-900' : 
+               l.startsWith('[SYSTEM]') ? 'text-sky-400 border-sky-900' : 
+               l.startsWith('[EVENT]') ? 'text-amber-400 border-amber-900' : 
+               l.startsWith('[STORY]') ? 'text-purple-400 border-purple-900' : 
+               l.startsWith('[GUIDE]') ? 'text-emerald-400 border-emerald-900' :
+               'text-slate-400 border-slate-800'
+             }`}>
                {l}
              </div>
            ))}
@@ -841,6 +969,13 @@ const App: React.FC = () => {
              </div>
            ) : (
              <>
+               <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest border border-white/5 rounded-xl px-3 py-2 bg-slate-900/40 flex flex-col gap-1">
+                 <div className="flex items-center justify-between">
+                   <span>{t.progressLabel}</span>
+                   <span className="text-sky-400 font-mono">{gameState.progress}/3</span>
+                 </div>
+                 <span className="text-slate-500 font-normal normal-case tracking-normal text-[9px]">{t.progressHint}</span>
+               </div>
                {currentLandmark.options.map(opt => (
                  <button key={opt.id} onClick={() => handleRouteChoice(opt)} className="w-full py-4 bg-sky-700 text-white font-black rounded-xl uppercase tracking-widest text-xs shadow-lg shadow-sky-900/20 active:scale-95 transition-all">{t.proceed}</button>
                ))}
@@ -862,10 +997,16 @@ const App: React.FC = () => {
         {gameState.phase === 'gameover' && (
           <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-6 animate-in fade-in duration-500 hardware-accel">
              <div className="max-w-md w-full cyber-panel p-8 rounded-[2.5rem] border border-red-500/20 text-center space-y-8 shadow-2xl">
-                <h2 className={`text-4xl md:text-5xl font-black italic uppercase tracking-tighter ${gameState.status.health <= 0 ? 'text-neon-red text-red-700' : 'text-emerald-500'}`}>
-                   {gameState.status.health <= 0 ? t.failed : t.success}
+                <h2 className={`text-4xl md:text-5xl font-black italic uppercase tracking-tighter ${gameState.currentLandmarkIndex === LANDMARKS.length - 1 && gameState.status.health > 0 ? 'text-emerald-500' : 'text-neon-red text-red-700'}`}>
+                   {gameState.currentLandmarkIndex === LANDMARKS.length - 1 && gameState.status.health > 0 ? t.success : t.failed}
                 </h2>
                 <p className="text-slate-300 text-xs leading-relaxed italic border-y border-white/5 py-6 px-4">{gameState.gameMessage[gameState.language]}</p>
+                {gameState.deathCauseChain.length > 0 && (
+                  <div className="bg-red-950/30 border border-red-700/50 rounded-lg px-4 py-3 text-left">
+                    <p className="text-red-400 text-[10px] font-black uppercase tracking-widest mb-2">【死亡原因链条】</p>
+                    <p className="text-red-300 text-xs font-mono leading-relaxed">{gameState.deathCauseChain[0][gameState.language]}</p>
+                  </div>
+                )}
                 <div className="grid grid-cols-4 gap-2">
                    <div className="space-y-1"><p className="text-[8px] text-slate-500 uppercase font-black">功德</p><p className="text-base font-black text-white">{gameState.merit}</p></div>
                    <div className="space-y-1"><p className="text-[8px] text-slate-500 uppercase font-black">里程</p><p className="text-base font-black text-white">{gameState.currentLandmarkIndex + 1}</p></div>
@@ -902,6 +1043,8 @@ const translations: any = {
     stamina: '动力储备',
     temp: '核心体温',
     proceed: '推进路程',
+    progressLabel: '路段推进',
+    progressHint: '到 3/3 将抵达下一地标',
     rest: '原地休息',
     camp: '扎营驻守',
     sleep: '深度睡眠',
@@ -951,6 +1094,8 @@ const translations: any = {
     stamina: 'Stamina',
     temp: 'Body Temp',
     proceed: 'Advance',
+    progressLabel: 'Segment progress',
+    progressHint: 'Reach 3/3 to move to the next landmark',
     rest: 'Rest',
     camp: 'Camp',
     sleep: 'Sleep',

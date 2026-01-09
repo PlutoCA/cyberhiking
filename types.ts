@@ -119,4 +119,5 @@ export interface GameState {
   achievements: Achievement[];
   startWeight: number;
   isCamping: boolean;
+  deathCauseChain: { zh: string; en: string }[]; // 死亡原因链条
 }

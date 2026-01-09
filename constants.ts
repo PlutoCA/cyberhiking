@@ -81,15 +81,6 @@ export const LANDMARKS: Landmark[] = [
       { text: { zh: '改变路线，远离这些踪迹', en: 'Change route, avoid tracks' }, log: { zh: '你谨慎地改变了路线，避开潜在的危险。', en: 'You cautiously changed route, avoiding potential danger.' }, healthImpact: 0, staminaImpact: -10, meritImpact: 10 },
       { text: { zh: '继续前行，保持警惕', en: 'Continue forward, stay alert' }, log: { zh: '你小心地继续前进，幸运地没有遇到羚牛。', en: 'You carefully continued forward, luckily not encountering any gorals.' }, healthImpact: 0, staminaImpact: -5, meritImpact: 5 }
     ]
-  },
-  {
-    id: 'e18',
-    title: { zh: '雪豹的凝视', en: 'Snow Leopard\'s Stare' },
-    description: { zh: '在一处岩石上，你与一只雪豹四目相对。作为秦岭的顶级掠食者，雪豹很少主动攻击人类，但它的眼神充满了野性的威严。', en: 'On a rocky outcrop, you lock eyes with a snow leopard. As the apex predator of Qinling, snow leopards rarely attack humans, but its gaze is filled with wild majesty.' },
-    choices: [
-      { text: { zh: '避免直视，慢慢退后，不激怒这位山中王者', en: 'Avoid eye contact, retreat slowly' }, log: { zh: '你以恰当的方式表达了对山中王者的尊重，安全离开了现场。', en: 'You respectfully showed deference to the mountain king, safely leaving the scene.' }, healthImpact: 0, staminaImpact: -8, meritImpact: 20 },
-      { text: { zh: '尝试拍照记录这一难得的相遇', en: 'Try to photograph the rare encounter' }, log: { zh: '你试图拍照的行为让雪豹感到威胁，它咆哮一声后消失了。', en: 'Your attempt to photograph startled the snow leopard, which roared and disappeared.' }, healthImpact: 0, staminaImpact: -5, meritImpact: -5 }
-    ]
   }
 ];
 
@@ -120,6 +111,8 @@ export const SHOP_ITEMS: InventoryItem[] = [
   { id: 'm2', name: { zh: '便携式氧气瓶', en: 'Oxygen Tank' }, type: 'med', quality: 'pro', description: { zh: '对抗急性高反。', en: 'Relieves altitude sickness.' }, quantity: 0, weight: 0.2, cost: 150, isConsumable: true, treats: '高反', effect: (s) => ({ ...s, health: Math.min(100, s.health + 10), stamina: Math.min(100, s.stamina + 20), conditions: s.conditions.filter(c => c !== '高反') }) },
   { id: 'm3', name: { zh: '布洛芬缓释胶囊', en: 'Ibuprofen' }, type: 'med', quality: 'basic', description: { zh: '止痛退烧，压制寒冷不适。', en: 'Pain relief.' }, quantity: 0, weight: 0.05, cost: 50, isConsumable: true, effect: (s) => ({ ...s, health: Math.min(100, s.health + 15), stamina: Math.min(100, s.stamina + 5) }) },
   { id: 'm5', name: { zh: '专业防冻膏', en: 'Frostbite Cream' }, type: 'med', quality: 'pro', description: { zh: '涂抹后可暂时锁定核心体温流失速度。', en: 'Prevents frostbite.' }, quantity: 0, weight: 0.1, cost: 120, isConsumable: true, effect: (s) => ({ ...s, bodyTemp: Math.min(37.2, s.bodyTemp + 0.1) }) },
+  { id: 'm6', name: { zh: '失温急救包', en: 'Hypothermia Kit' }, type: 'med', quality: 'elite', description: { zh: '0.2kg。快速缓解失温症状，恢复核心体温。', en: '0.2kg. Rapid hypothermia relief.' }, quantity: 0, weight: 0.2, cost: 250, isConsumable: true, treats: '失温', effect: (s) => ({ ...s, bodyTemp: Math.min(37.2, s.bodyTemp + 1.2), health: Math.min(100, s.health + 20), conditions: s.conditions.filter(c => c !== '失温') }) },
+  { id: 'm7', name: { zh: '暖宝贴 x5', en: 'Heat Patches x5' }, type: 'med', quality: 'basic', description: { zh: '0.02kg。贴在身体保暖，可用于紧急失温。', en: '0.02kg. Stick-on warmth packs.' }, quantity: 0, weight: 0.02, cost: 80, isConsumable: true, effect: (s) => ({ ...s, bodyTemp: Math.min(37.2, s.bodyTemp + 0.5), conditions: s.conditions.includes('失温') ? s.conditions.filter(c => c !== '失温') : s.conditions }) },
   
   // --- 新增装备类 ---
   { id: 'g9', name: { zh: '防寒内衣套装', en: 'Thermal Underwear Set' }, type: 'gear', quality: 'pro', description: { zh: '0.4kg。基础保温层，提高体温维持能力。', en: '0.4kg. Base thermal layer for heat retention.' }, quantity: 0, weight: 0.4, cost: 200, isConsumable: false, isEquippable: true, equipmentSlot: 'clothing', effect: (s) => ({ ...s, bodyTemp: Math.min(37.5, s.bodyTemp + 0.2) }) },
@@ -169,7 +162,8 @@ export const INITIAL_GAME_STATE: GameState = {
   checkedInLandmarks: [],
   achievements: ACHIEVEMENTS,
   startWeight: 0,
-  isCamping: false
+  isCamping: false,
+  deathCauseChain: []
 };
 
 export const LOCAL_EVENTS: RandomEvent[] = [
@@ -333,6 +327,72 @@ export const LOCAL_EVENTS: RandomEvent[] = [
     choices: [
       { text: { zh: '避免直视，慢慢退后，不激怒这位山中王者', en: 'Avoid eye contact, retreat slowly' }, log: { zh: '你以恰当的方式表达了对山中王者的尊重，安全离开了现场。', en: 'You respectfully showed deference to the mountain king, safely leaving the scene.' }, healthImpact: 0, staminaImpact: -8, meritImpact: 20 },
       { text: { zh: '尝试拍照记录这一难得的相遇', en: 'Try to photograph the rare encounter' }, log: { zh: '你试图拍照的行为让雪豹感到威胁，它咆哮一声后消失了。', en: 'Your attempt to photograph startled the snow leopard, which roared and disappeared.' }, healthImpact: 0, staminaImpact: -5, meritImpact: -5 }
+    ]
+  },
+  {
+    id: 'e19',
+    title: { zh: '野猪群的包围', en: 'Wild Boar Herd' },
+    description: { zh: '一群野猪突然从灌木丛中冲出，它们似乎把你视为威胁。粗壮的哼哼声回荡在山谷中，地面震颤。', en: 'A herd of wild boars suddenly charges from the brush, seeing you as a threat. Their grunts echo through the valley.' },
+    choices: [
+      { text: { zh: '快速逃到高地或爬树躲避', en: 'Climb to higher ground immediately' }, log: { zh: '你敏捷地逃到安全的高地，野猪群从你身下奔过。惊险但化险为夷。', en: 'You nimbly reach higher ground as the boar herd thunders past below. Close call!' }, healthImpact: 0, staminaImpact: -20, meritImpact: 0 },
+      { text: { zh: '站住不动，希望它们不理你', en: 'Stay still and hope they ignore you' }, log: { zh: '你冻住了。幸运的是，野猪群对你没有兴趣，掉头冲向另一个方向。', en: 'You froze. Fortunately, the boars lost interest and charged another direction.' }, healthImpact: 0, staminaImpact: -5, meritImpact: 5 },
+      { text: { zh: '展开防御，与野猪搏斗', en: 'Fight back against the boars' }, log: { zh: '你的蛮撞付出了代价。一只野猪的獠牙划伤了你的大腿，你狼狈地逃脱。', en: 'Your bravado costs you. A boar\'s tusk gashes your thigh, but you manage to escape.' }, healthImpact: -25, staminaImpact: -30, meritImpact: -10, conditionAdded: '外伤' }
+    ]
+  },
+  {
+    id: 'e20',
+    title: { zh: '失踪者通告', en: 'Missing Person Notice' },
+    description: { zh: '你发现了一张被风吹得破烂的寻人启事，一位5个月前失踪的登山者照片清晰可见。启事上的电话号码已经模糊，但你识别出了一个位置记号。心中涌起一丝不安。', en: 'You find a tattered missing person notice. A climber who vanished 5 months ago stares from the poster.' },
+    choices: [
+      { text: { zh: '记录下信息，如果有机会就报警', en: 'Note the info and report if possible' }, log: { zh: '你小心地拍照记录了这张启事。至少，如果你生还也许能提供线索。', en: 'You photograph the notice carefully. Maybe your survival can provide clues.' }, healthImpact: -5, staminaImpact: -5, meritImpact: 15 },
+      { text: { zh: '继续前行，这不是你的责任', en: 'Continue forward, not your concern' }, log: { zh: '你走了过去，但那张脸深深印在了你的脑海中。', en: 'You moved on, but that face haunts you.' }, healthImpact: 0, staminaImpact: 0, meritImpact: -20 }
+    ]
+  },
+  {
+    id: 'e21',
+    title: { zh: '被困的登山队', en: 'Stranded Climbers' },
+    description: { zh: '你发现了一处临时营地，四名登山者因天气恶劣被困已经3天。他们的食物和燃料即将耗尽，其中一人已经出现高反症状。他们看到你时露出了希望的表情。', en: 'You find a makeshift camp with 4 stranded climbers. They\'ve been trapped for days by bad weather.' },
+    choices: [
+      { text: { zh: '分享物资并协助撤离（需要：气罐x2, 食物x3, 氧气瓶x1）', en: 'Share supplies and assist evacuation' }, log: { zh: '你用尽了身上的补给，成功帮助他们度过难关并找到了安全的下撤路线。他们会一生感激你的义举。', en: 'You share your supplies, helping them find safety. They will remember your kindness forever.' }, healthImpact: -15, staminaImpact: -25, meritImpact: 150, requiredItems: [{ itemId: 'g5', quantity: 2 }, { itemId: 'f2', quantity: 3 }, { itemId: 'm2', quantity: 1 }] },
+      { text: { zh: '分享部分物资，但无法陪同撤离', en: 'Share some supplies but cannot stay' }, log: { zh: '你留下了一些食物和水，希望他们能坚持到救援到来。', en: 'You leave some food and water, hoping rescue arrives in time.' }, healthImpact: 0, staminaImpact: -10, meritImpact: 50 },
+      { text: { zh: '难以自保，匆匆离去', en: 'Cannot help, must move on' }, log: { zh: '你知道自己也在绝境中，选择了继续前行。那些哀望的眼神会在你的梦境中反复出现。', en: 'You know you\'re also in danger. Those eyes will haunt your dreams.' }, healthImpact: 0, staminaImpact: 0, meritImpact: -80 }
+    ]
+  },
+  {
+    id: 'e22',
+    title: { zh: '幻觉与疯狂', en: 'Illusions in Mist' },
+    description: { zh: '在浓雾中行走了太久，你开始看到奇怪的东西。有时是亲友的身影，有时是建筑物的轮廓。你不确定哪些是真实的，哪些只是缺氧导致的幻觉。', en: 'After hours in the mist, you see strange things. You can\'t distinguish reality from hallucination.' },
+    choices: [
+      { text: { zh: '停下休息，深呼吸恢复理智', en: 'Stop and rest, regain clarity' }, log: { zh: '你停了下来，做了几次深呼吸。世界逐渐清晰，幻觉消散了。', en: 'You stop, breathe deeply. The world sharpens. Clarity returns.' }, healthImpact: 5, staminaImpact: -20, meritImpact: 0 },
+      { text: { zh: '继续前行，追逐那些幻影', en: 'Follow the illusions forward' }, log: { zh: '你被幻觉所迷，走了很多冤枉路，体力消耗严重。', en: 'The hallucinations lead you astray. Wasted stamina.' }, healthImpact: -10, staminaImpact: -40, meritImpact: -25 }
+    ]
+  },
+  {
+    id: 'e23',
+    title: { zh: '雪崩预兆', en: 'Avalanche Warning' },
+    description: { zh: '远处传来沉闷的轰鸣声，天空中的积雪开始松动。雪沙从上方流泻而下，节奏越来越快。这是雪崩的前兆。你有30秒的时间做出反应。', en: 'A distant rumble. Snow above becomes unstable. Avalanche warning. ~30 seconds to react.' },
+    choices: [
+      { text: { zh: '向侧面冲刺逃离雪流路线', en: 'Sprint sideways out of the path' }, log: { zh: '你拼命向侧面奔跑，堪堪逃过了雪崩。你在雪花中跌倒，但活了下来。', en: 'You sprint sideways, narrowly escaping. You survive.' }, healthImpact: -15, staminaImpact: -35, meritImpact: 0 },
+      { text: { zh: '躲进最近的岩石缝隙中', en: 'Hide in the nearest rock crevice' }, log: { zh: '你蜷缩在岩缝中，雪流呼啸而过，但没有完全埋住你。', en: 'You curl in a rock crevice. You\'re not buried.' }, healthImpact: -5, staminaImpact: -20, meritImpact: 5 },
+      { text: { zh: '冻住原地，不知所措', en: 'Freeze in panic, paralyzed' }, log: { zh: '你被吓住了。雪流击中你，你被部分埋住，但侥幸活下来。', en: 'You freeze. The snow hits you, partially burying you, but you survive.' }, healthImpact: -30, staminaImpact: -45, meritImpact: -15, conditionAdded: '外伤' }
+    ]
+  },
+  {
+    id: 'e24',
+    title: { zh: '古老的祭坛遗迹', en: 'Ancient Shrine Ruins' },
+    description: { zh: '在山脊上，你发现了一个残破的石头祭坛，上面留下了许多信徒的祈福物和纸条。有人祈求平安，有人留下遗言。这个地方充满了神圣与绝望交织的气息。', en: 'On the ridge, you find ancient shrine ruins scattered with prayer offerings and notes.' },
+    choices: [
+      { text: { zh: '敬礼祈福，留下自己的信念', en: 'Pay respects and leave your prayer' }, log: { zh: '你停下脚步，为自己、为这座山献上敬礼。心中的恐惧似乎消散了一些。', en: 'You pay respects to the mountain. Fear subsides slightly.' }, healthImpact: 5, staminaImpact: -5, meritImpact: 25 },
+      { text: { zh: '匆匆略过，这些都是迷信', en: 'Move on, this is superstition' }, log: { zh: '你无视了这个遗迹，但某种说不出的不安始终跟随着你。', en: 'You dismiss it as superstition, but unease lingers.' }, healthImpact: 0, staminaImpact: 0, meritImpact: -10 }
+    ]
+  },
+  {
+    id: 'e25',
+    title: { zh: '搜救直升机', en: 'Rescue Helicopter' },
+    description: { zh: '一架搜救直升机突然从云层中出现，并向你靠近！机舱中的人员似乎发现了你。这可能是逃出困境的机会，但接近直升机意味着暴露在气流和风险中。', en: 'A rescue helicopter emerges from the clouds, moving toward you! A chance to escape.' },
+    choices: [
+      { text: { zh: '挥手示意，尽全力吸引注意', en: 'Wave frantically to get their attention' }, log: { zh: '你疯狂地挥舞，飞行员看到了你。直升机开始降低高度准备救援。', en: 'You wave frantically. The pilot spots you. The helicopter begins its approach.' }, healthImpact: 0, staminaImpact: -15, meritImpact: 0 },
+      { text: { zh: '躲开飞机气流，观察是否真的看到你', en: 'Dodge the rotor wash, assess situation' }, log: { zh: '你躲到安全位置。直升机没有减速，它在搜索其他受难者。希望破灭了。', en: 'You take cover. The helicopter doesn\'t slow. Hope shattered.' }, healthImpact: -10, staminaImpact: -10, meritImpact: -30 }
     ]
   }
 ];

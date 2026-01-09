@@ -1,0 +1,30 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://aotai-trail.app/sitemap.xml
+
+# Block access to sensitive files
+Disallow: /api/
+Disallow: /*.json$
+Disallow: /config/
+
+# Allow common crawlers
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+User-agent: Sogou web spider
+Allow: /
+
+User-agent: 360Spider
+Allow: /
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1
