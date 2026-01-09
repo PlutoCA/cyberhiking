@@ -1,20 +1,28 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# 赛博徒步 - 生死鳌太线
 
-# Run and deploy your AI Studio app
+## 项目描述
+这是一个关于鳌太线徒步探险的项目。
 
-This contains everything you need to run your app locally.
+## 主要特性
+- 路线规划
+- 安全指南
+- 装备清单
+- 经验分享
 
-View your app in AI Studio: https://ai.studio/apps/drive/10nSKS-1R-uwykORENGnxToN4rZyZDypT
+## 快速开始
+1. 克隆仓库
+2. 查看相关文档
+3. 准备装备
+4. 开始探险
 
-## Run Locally
+## 注意事项
+- 确保具备充分的体能准备
+- 携带必要的安全装备
+- 了解天气预报
+- 告知他人你的行程
 
-**Prerequisites:**  Node.js
+## 贡献
+欢迎提交 Pull Request 或 Issue
 
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## 许可证
+MIT License
