@@ -59,6 +59,9 @@ export interface InventoryItem {
   weight: number;
   cost: number;
   isConsumable: boolean;
+  isEquippable?: boolean; // 是否可装备
+  isEquipped?: boolean;   // 是否已装备
+  equipmentSlot?: 'clothing' | 'footwear' | 'accessory' | 'tool' | 'other'; // 装备槽位
   treats?: string;
 }
 
@@ -79,6 +82,9 @@ export interface EventChoice {
   healthImpact: number;
   staminaImpact: number;
   meritImpact: number;
+  bodyTempImpact?: number;
+  hydrationImpact?: number;
+  energyImpact?: number;
   conditionAdded?: string;
   conditionRemoved?: string;
   requiredItems?: { itemId: string; quantity: number }[];

@@ -63,6 +63,33 @@ export const LANDMARKS: Landmark[] = [
     sceneryKeywords: 'village home lights', 
     imageUrl: 'https://images.unsplash.com/photo-1500382017468-9049fee74a62?auto=format&fit=crop&q=80&w=1200',
     options: []
+  },
+  {
+    id: 'e16',
+    title: { zh: '偶遇金丝猴群', en: 'Golden Monkey Encounter' },
+    description: { zh: '一群秦岭金丝猴出现在附近的树枝上好奇地打量着你。它们看起来并无恶意，但可能会抢夺你暴露在外的食物。', en: 'A group of Qinling golden monkeys appear on nearby branches, curiously eyeing you. They seem harmless but might steal exposed food.' },
+    choices: [
+      { text: { zh: '保持静止，缓慢后退，避免冲突', en: 'Stay still, retreat slowly' }, log: { zh: '你安静地离开了这片区域，与金丝猴们和平共处。', en: 'You quietly left the area, coexisting peacefully with the golden monkeys.' }, healthImpact: 0, staminaImpact: -5, meritImpact: 10 },
+      { text: { zh: '拿出食物投喂，试图与它们建立友好关系', en: 'Offer food to befriend them' }, log: { zh: '金丝猴们接受了你的善意，但你也损失了一些珍贵的补给。', en: 'The golden monkeys accepted your kindness, but you also lost some precious supplies.' }, healthImpact: 0, staminaImpact: -10, meritImpact: 15, requiredItems: [{ itemId: 'f1', quantity: 1 }] }
+    ]
+  },
+  {
+    id: 'e17',
+    title: { zh: '羚牛踪迹', en: 'Goral Tracks' },
+    description: { zh: '你在雪地上发现了大型动物的足迹，向导手册告诉你这是羚牛的踪迹。羚牛通常温和，但在繁殖季节或感到威胁时会变得极具攻击性。', en: 'You discover large animal tracks in the snow. Your guidebook identifies them as goral tracks. Gorals are typically gentle but can become highly aggressive during mating season or when threatened.' },
+    choices: [
+      { text: { zh: '改变路线，远离这些踪迹', en: 'Change route, avoid tracks' }, log: { zh: '你谨慎地改变了路线，避开潜在的危险。', en: 'You cautiously changed route, avoiding potential danger.' }, healthImpact: 0, staminaImpact: -10, meritImpact: 10 },
+      { text: { zh: '继续前行，保持警惕', en: 'Continue forward, stay alert' }, log: { zh: '你小心地继续前进，幸运地没有遇到羚牛。', en: 'You carefully continued forward, luckily not encountering any gorals.' }, healthImpact: 0, staminaImpact: -5, meritImpact: 5 }
+    ]
+  },
+  {
+    id: 'e18',
+    title: { zh: '雪豹的凝视', en: 'Snow Leopard\'s Stare' },
+    description: { zh: '在一处岩石上，你与一只雪豹四目相对。作为秦岭的顶级掠食者，雪豹很少主动攻击人类，但它的眼神充满了野性的威严。', en: 'On a rocky outcrop, you lock eyes with a snow leopard. As the apex predator of Qinling, snow leopards rarely attack humans, but its gaze is filled with wild majesty.' },
+    choices: [
+      { text: { zh: '避免直视，慢慢退后，不激怒这位山中王者', en: 'Avoid eye contact, retreat slowly' }, log: { zh: '你以恰当的方式表达了对山中王者的尊重，安全离开了现场。', en: 'You respectfully showed deference to the mountain king, safely leaving the scene.' }, healthImpact: 0, staminaImpact: -8, meritImpact: 20 },
+      { text: { zh: '尝试拍照记录这一难得的相遇', en: 'Try to photograph the rare encounter' }, log: { zh: '你试图拍照的行为让雪豹感到威胁，它咆哮一声后消失了。', en: 'Your attempt to photograph startled the snow leopard, which roared and disappeared.' }, healthImpact: 0, staminaImpact: -5, meritImpact: -5 }
+    ]
   }
 ];
 
@@ -80,19 +107,32 @@ export const SHOP_ITEMS: InventoryItem[] = [
   { id: 'w3', name: { zh: '速效净水片', en: 'Water Purification' }, type: 'water', quality: 'pro', description: { zh: '允许直接补给野外雪水而不会腹泻。', en: 'Purify wild water.' }, quantity: 0, weight: 0.01, cost: 40, isConsumable: true, effect: (s) => s },
 
   // --- 装备类 (Gear) ---
-  { id: 'g1', name: { zh: '硬壳Gore-Tex冲锋衣', en: 'Gore-Tex Jacket' }, type: 'gear', quality: 'pro', description: { zh: '0.5kg。顶级防风防水，失温风险减半。', en: '0.5kg. Wind and rain protection.' }, quantity: 0, weight: 0.5, cost: 450, isConsumable: false, effect: (s) => s },
-  { id: 'g2', name: { zh: '三季高山帐', en: 'Alpine Tent' }, type: 'gear', quality: 'elite', description: { zh: '2.2kg。抗风避风港。', en: '2.2kg. Extreme wind shelter.' }, quantity: 0, weight: 2.2, cost: 650, isConsumable: false, effect: (s) => s },
-  { id: 'g3', name: { zh: '800蓬羽绒睡袋', en: 'Down Sleeping Bag' }, type: 'gear', quality: 'pro', description: { zh: '1.2kg。极限温标-20℃。', en: '1.2kg. Extreme warmth.' }, quantity: 0, weight: 1.2, cost: 500, isConsumable: false, effect: (s) => s },
-  { id: 'g4', name: { zh: '强光LED头灯', en: 'High-Power Headlamp' }, type: 'gear', quality: 'pro', description: { zh: '夜间行军必备，视野清晰。', en: 'Essential for night travel.' }, quantity: 0, weight: 0.1, cost: 180, isConsumable: false, effect: (s) => s },
+  { id: 'g1', name: { zh: '硬壳Gore-Tex冲锋衣', en: 'Gore-Tex Jacket' }, type: 'gear', quality: 'pro', description: { zh: '0.5kg。顶级防风防水，失温风险减半。', en: '0.5kg. Wind and rain protection.' }, quantity: 0, weight: 0.5, cost: 450, isConsumable: false, isEquippable: true, equipmentSlot: 'clothing', effect: (s) => s },
+  { id: 'g2', name: { zh: '三季高山帐', en: 'Alpine Tent' }, type: 'gear', quality: 'elite', description: { zh: '2.2kg。抗风避风港。', en: '2.2kg. Extreme wind shelter.' }, quantity: 0, weight: 2.2, cost: 650, isConsumable: false, isEquippable: true, equipmentSlot: 'other', effect: (s) => s },
+  { id: 'g3', name: { zh: '800蓬羽绒睡袋', en: 'Down Sleeping Bag' }, type: 'gear', quality: 'pro', description: { zh: '1.2kg。极限温标-20℃。', en: '1.2kg. Extreme warmth.' }, quantity: 0, weight: 1.2, cost: 500, isConsumable: false, isEquippable: true, equipmentSlot: 'other', effect: (s) => s },
+  { id: 'g4', name: { zh: '强光LED头灯', en: 'High-Power Headlamp' }, type: 'gear', quality: 'pro', description: { zh: '夜间行军必备，视野清晰。', en: 'Essential for night travel.' }, quantity: 0, weight: 0.1, cost: 180, isConsumable: false, isEquippable: true, equipmentSlot: 'accessory', effect: (s) => s },
   { id: 'g5', name: { zh: '一体式炉头+气罐', en: 'Stove & Gas' }, type: 'gear', quality: 'pro', description: { zh: '0.6kg。融雪化水，提供核心体温。', en: '0.6kg. Melt snow for water.' }, quantity: 0, weight: 0.6, cost: 200, isConsumable: true, effect: (s) => s },
-  { id: 'g7', name: { zh: '钛合金折叠登山杖', en: 'Titanium Poles' }, type: 'gear', quality: 'elite', description: { zh: '0.3kg。极轻，显著减少体力消耗。', en: 'Ultra-light. Saves stamina.' }, quantity: 0, weight: 0.3, cost: 350, isConsumable: false, effect: (s) => s },
-  { id: 'g8', name: { zh: '卫星通讯终端', en: 'Satellite Terminal' }, type: 'gear', quality: 'elite', description: { zh: '0.4kg。在极端状态下可消耗100点功德强制撤回。', en: 'Emergency satellite comms.' }, quantity: 0, weight: 0.4, cost: 800, isConsumable: false, effect: (s) => s },
+  { id: 'g7', name: { zh: '钛合金折叠登山杖', en: 'Titanium Poles' }, type: 'gear', quality: 'elite', description: { zh: '0.3kg。极轻，显著减少体力消耗。', en: 'Ultra-light. Saves stamina.' }, quantity: 0, weight: 0.3, cost: 350, isConsumable: false, isEquippable: true, equipmentSlot: 'tool', effect: (s) => ({ ...s, stamina: s.stamina + 5 }) },
+  { id: 'g8', name: { zh: '卫星通讯终端', en: 'Satellite Terminal' }, type: 'gear', quality: 'elite', description: { zh: '0.4kg。在极端状态下可消耗100点功德强制撤回。', en: 'Emergency satellite comms.' }, quantity: 0, weight: 0.4, cost: 800, isConsumable: false, isEquippable: true, equipmentSlot: 'accessory', effect: (s) => s },
 
   // --- 医疗类 (Med) ---
   { id: 'm1', name: { zh: '综合急救箱', en: 'Full First-Aid Kit' }, type: 'med', quality: 'basic', description: { zh: '处理外伤与止血。', en: 'Treats minor injuries.' }, quantity: 0, weight: 0.3, cost: 60, isConsumable: true, treats: '外伤', effect: (s) => ({ ...s, health: Math.min(100, s.health + 30), conditions: s.conditions.filter(c => c !== '外伤') }) },
   { id: 'm2', name: { zh: '便携式氧气瓶', en: 'Oxygen Tank' }, type: 'med', quality: 'pro', description: { zh: '对抗急性高反。', en: 'Relieves altitude sickness.' }, quantity: 0, weight: 0.2, cost: 150, isConsumable: true, treats: '高反', effect: (s) => ({ ...s, health: Math.min(100, s.health + 10), stamina: Math.min(100, s.stamina + 20), conditions: s.conditions.filter(c => c !== '高反') }) },
   { id: 'm3', name: { zh: '布洛芬缓释胶囊', en: 'Ibuprofen' }, type: 'med', quality: 'basic', description: { zh: '止痛退烧，压制寒冷不适。', en: 'Pain relief.' }, quantity: 0, weight: 0.05, cost: 50, isConsumable: true, effect: (s) => ({ ...s, health: Math.min(100, s.health + 15), stamina: Math.min(100, s.stamina + 5) }) },
   { id: 'm5', name: { zh: '专业防冻膏', en: 'Frostbite Cream' }, type: 'med', quality: 'pro', description: { zh: '涂抹后可暂时锁定核心体温流失速度。', en: 'Prevents frostbite.' }, quantity: 0, weight: 0.1, cost: 120, isConsumable: true, effect: (s) => ({ ...s, bodyTemp: Math.min(37.2, s.bodyTemp + 0.1) }) },
+  
+  // --- 新增装备类 ---
+  { id: 'g9', name: { zh: '防寒内衣套装', en: 'Thermal Underwear Set' }, type: 'gear', quality: 'pro', description: { zh: '0.4kg。基础保温层，提高体温维持能力。', en: '0.4kg. Base thermal layer for heat retention.' }, quantity: 0, weight: 0.4, cost: 200, isConsumable: false, isEquippable: true, equipmentSlot: 'clothing', effect: (s) => ({ ...s, bodyTemp: Math.min(37.5, s.bodyTemp + 0.2) }) },
+  { id: 'g10', name: { zh: '高帮登山靴', en: 'Mountaineering Boots' }, type: 'gear', quality: 'pro', description: { zh: '1.1kg。防滑防水，保护脚踝。', en: '1.1kg. Anti-slip, waterproof, ankle protection.' }, quantity: 0, weight: 1.1, cost: 300, isConsumable: false, isEquippable: true, equipmentSlot: 'footwear', effect: (s) => ({ ...s, stamina: s.stamina + 3 }) },
+  { id: 'g11', name: { zh: '防潮垫', en: 'Insulated Mat' }, type: 'gear', quality: 'basic', description: { zh: '0.4kg。隔绝地面寒气，提升睡眠质量。', en: '0.4kg. Insulates from ground cold, improves sleep.' }, quantity: 0, weight: 0.4, cost: 120, isConsumable: false, isEquippable: true, equipmentSlot: 'other', effect: (s) => ({ ...s, bodyTemp: s.bodyTemp + 0.1 }) },
+  
+  // --- 新增食物类 ---
+  { id: 'f6', name: { zh: '高原能量棒', en: 'Altitude Energy Bar' }, type: 'food', quality: 'basic', description: { zh: '80g。专为高原设计，含铁和维生素。', en: '80g. Altitude-specific, iron and vitamins.' }, quantity: 0, weight: 0.08, cost: 25, isConsumable: true, effect: (s) => ({ ...s, energy: Math.min(100, s.energy + 18), stamina: Math.min(100, s.stamina + 8) }) },
+  { id: 'f7', name: { zh: '暖胃姜茶包', en: 'Warming Ginger Tea' }, type: 'food', quality: 'basic', description: { zh: '0.02kg。驱寒暖身，缓解高原反应。', en: '0.02kg. Warms body, relieves altitude effects.' }, quantity: 0, weight: 0.02, cost: 15, isConsumable: true, effect: (s) => ({ ...s, bodyTemp: Math.min(37.0, s.bodyTemp + 0.1), stamina: Math.min(100, s.stamina + 5) }) },
+  
+  // --- 新增水源类 ---
+  { id: 'w4', name: { zh: '运动饮料 (500ml)', en: 'Sports Drink (500ml)' }, type: 'water', quality: 'pro', description: { zh: '0.5kg。富含电解质，快速补水。', en: '0.5kg. Rich in electrolytes, rapid hydration.' }, quantity: 0, weight: 0.5, cost: 25, isConsumable: true, effect: (s) => ({ ...s, hydration: Math.min(100, s.hydration + 35), stamina: Math.min(100, s.stamina + 8) }) },
+  { id: 'w5', name: { zh: '保温水壶 (750ml)', en: 'Thermal Flask (750ml)' }, type: 'water', quality: 'pro', description: { zh: '0.5kg。保持饮品温度，防止结冰。', en: '0.5kg. Maintains temperature, prevents freezing.' }, quantity: 0, weight: 0.5, cost: 150, isConsumable: false, isEquippable: true, equipmentSlot: 'tool', effect: (s) => ({ ...s, bodyTemp: s.bodyTemp + 0.05 }) },
 ];
 
 export const INITIAL_STATUS: PlayerStatus = {
@@ -158,6 +198,141 @@ export const LOCAL_EVENTS: RandomEvent[] = [
     choices: [
       { text: { zh: '搜寻可用物资', en: 'Search cache' }, log: { zh: '你找到了一些可用的气罐补给。虽然略感惭愧，但生存概率提升。', en: 'You found some useful gear.' }, healthImpact: 0, staminaImpact: -5, meritImpact: -10, rewardItems: [{ itemId: 'g5', quantity: 1 }] },
       { text: { zh: '不去惊扰死者的安宁/他人的补给', en: 'Leave it' }, log: { zh: '你保持了尊严与敬畏，继续前行。', en: 'You left it untouched.' }, healthImpact: 0, staminaImpact: 0, meritImpact: 30 }
+    ]
+  },
+  {
+    id: 'e4',
+    title: { zh: '遭遇恶劣天气', en: 'Severe Weather' },
+    description: { zh: '天空突然变暗，狂风夹杂着雪花扑面而来。气温骤降，能见度急剧下降，你的处境变得非常危险。', en: 'The sky suddenly darkens, fierce winds mixed with snow hit your face. Temperature drops rapidly, visibility decreases drastically, your situation becomes very dangerous.' },
+    choices: [
+      { text: { zh: '立即寻找避风处搭建临时庇护所', en: 'Find shelter and build temporary shelter immediately' }, log: { zh: '你迅速找到一处岩石缝隙，利用携带的装备搭建了临时庇护所，熬过了这场突如其来的暴风雪。', en: 'You quickly find a rock crevice, use your equipment to build a temporary shelter, and endure the sudden blizzard.' }, healthImpact: 0, staminaImpact: -15, meritImpact: 10 },
+      { text: { zh: '冒风前行，试图尽快到达下一个安全点', en: 'Press on through the storm to reach safety' }, log: { zh: '你冒着风雪艰难前行，虽然节约了时间，但体力大量消耗，体温也开始下降。', en: 'You struggle through the snowstorm, saving time but losing significant stamina and body temperature.' }, healthImpact: -5, staminaImpact: -25, bodyTempImpact: -0.5, meritImpact: -10 }
+    ]
+  },
+  {
+    id: 'e5',
+    title: { zh: '迷失方向', en: 'Lost Direction' },
+    description: { zh: '在复杂的地形中，你发现自己完全失去了方向感。GPS信号微弱，指南针也受到干扰，四周看起来都很相似。', en: 'In the complex terrain, you realize you\'ve completely lost your sense of direction. GPS signal is weak, compass is interfered with, surroundings all look similar.' },
+    choices: [
+      { text: { zh: '冷静分析地形，尝试通过自然标志判断方向', en: 'Analyze terrain calmly, use natural landmarks' }, log: { zh: '你仔细观察太阳的位置、植被分布和山势走向，成功找回了正确的方向。', en: 'You carefully observe sun position, vegetation distribution, and mountain trends to regain correct direction.' }, healthImpact: 0, staminaImpact: -5, meritImpact: 15 },
+      { text: { zh: '继续按原方向前进，希望能碰巧找到正确路径', en: 'Continue forward hoping to find path' }, log: { zh: '你盲目地继续前行，结果越走越远，消耗了大量体力才勉强回到原路。', en: 'You blindly continue forward, getting further lost and expending much energy returning.' }, healthImpact: -10, staminaImpact: -30, meritImpact: -20 }
+    ]
+  },
+  {
+    id: 'e6',
+    title: { zh: '发现失踪驴友', en: 'Missing Hiker Found' },
+    description: { zh: '在一处隐蔽的山洞里，你发现了一名多日未归的失踪驴友，他已经虚弱不堪，急需帮助。', en: 'In a hidden cave, you find a missing hiker who has been gone for days, he is extremely weak and in urgent need of help.' },
+    choices: [
+      { text: { zh: '立即施救并尝试联系外界 (消耗大量物资)', en: 'Provide immediate aid and contact outside' }, log: { zh: '你用尽身上所有的医疗用品救治了这位驴友，虽然物资大幅减少，但拯救了一个生命。', en: 'You use all your medical supplies to treat the hiker, reducing supplies but saving a life.' }, healthImpact: 0, staminaImpact: -20, meritImpact: 50, requiredItems: [{ itemId: 'm1', quantity: 1 }, { itemId: 'w1', quantity: 1 }], rewardItems: [{ itemId: 'f1', quantity: 1 }] },
+      { text: { zh: '标记位置后离开，让专业的救援队伍来处理', en: 'Mark location and leave for professionals' }, log: { zh: '你标记了具体位置并留下了一些补给，希望后续的救援队伍能找到他。', en: 'You mark the location and leave some supplies, hoping rescuers will find him.' }, healthImpact: 0, staminaImpact: -5, meritImpact: 20 }
+    ]
+  },
+  {
+    id: 'e7',
+    title: { zh: '水源危机', en: 'Water Crisis' },
+    description: { zh: '你的最后一壶水已经见底，而前方的水源看起来浑浊不清。在这种高海拔地区，脱水的威胁迫在眉睫。', en: 'Your last water container is nearly empty, and the forward water sources look murky. Dehydration threat is imminent at this altitude.' },
+    choices: [
+      { text: { zh: '使用净水片处理野外水源', en: 'Use purification tablets on wild water' }, log: { zh: '你谨慎地使用了净水片处理野外水源，避免了因饮用不洁水导致的疾病。', en: 'You carefully use purification tablets on wild water, avoiding illness from unclean water.' }, healthImpact: 0, staminaImpact: -5, meritImpact: 10, requiredItems: [{ itemId: 'w3', quantity: 1 }] },
+      { text: { zh: '节省用水，加快步伐寻找清洁水源', en: 'Conserve water, hurry to find clean source' }, log: { zh: '你严格控制饮水量，加快步伐前进，但脱水症状已经开始显现。', en: 'You strictly ration water, speed up pace forward, but dehydration symptoms begin to appear.' }, healthImpact: -10, staminaImpact: -10, hydrationImpact: -15, meritImpact: -10 }
+    ]
+  },
+  {
+    id: 'e8',
+    title: { zh: '野生动物遭遇', en: 'Wildlife Encounter' },
+    description: { zh: '一只野生大熊猫出现在你的面前，它看起来并不具有攻击性，但挡住了你的去路。', en: 'A wild giant panda appears before you, seemingly non-aggressive but blocking your path.' },
+    choices: [
+      { text: { zh: '静静等待，不打扰它，直到它自行离开', en: 'Wait quietly without disturbing it' }, log: { zh: '你耐心等待，尊重野生动物的生活空间，最终它自行离开，你们平安无事。', en: 'You wait patiently, respecting wildlife space, eventually it leaves safely.' }, healthImpact: 0, staminaImpact: -10, meritImpact: 25 },
+      { text: { zh: '尝试拍照留念', en: 'Try to take photos' }, log: { zh: '你试图拍照的行为惊扰了熊猫，它发出低吼后离开，你也因此消耗了一些时间。', en: 'Your attempt to photograph startles the panda, it growls and leaves, costing you time.' }, healthImpact: 0, staminaImpact: -5, meritImpact: -10 }
+    ]
+  },
+  {
+    id: 'e9',
+    title: { zh: '队友掉队', en: 'Team Member Lagging' },
+    description: { zh: '如果你有队友的话，其中一人因为体力不支开始掉队，要求休息。继续等待可能错过最佳前进时机，但丢下队友违背道义。', en: 'If you had companions, one falls behind due to exhaustion and requests rest. Waiting may miss optimal timing, but leaving teammate goes against ethics.' },
+    choices: [
+      { text: { zh: '停下等待并提供帮助', en: 'Stop and provide assistance' }, log: { zh: '你停下脚步，将自己的补给分给队友，虽然耽误了时间，但体现了团队精神。', en: 'You stop and share supplies with teammate, wasting time but showing teamwork.' }, healthImpact: 0, staminaImpact: -10, meritImpact: 30 },
+      { text: { zh: '告知对方位置，约定在前方汇合', en: 'Inform position, agree to meet ahead' }, log: { zh: '你告知队友你的前进计划，在前方安全点等待，平衡了效率和责任。', en: 'You inform teammate of your plan, wait at safe point ahead, balancing efficiency and responsibility.' }, healthImpact: 0, staminaImpact: -5, meritImpact: 15 }
+    ]
+  },
+  {
+    id: 'e10',
+    title: { zh: '突发伤病', en: 'Sudden Injury' },
+    description: { zh: '在崎岖的山路上，你不慎滑倒，脚踝扭伤，行走变得困难。', en: 'On the rugged mountain path, you slip and sprain your ankle, making walking difficult.' },
+    choices: [
+      { text: { zh: '就地休息并使用医疗包处理伤势', en: 'Rest and treat injury with first aid kit' }, log: { zh: '你及时处理了伤势，虽然恢复缓慢，但避免了进一步恶化。', en: 'You promptly treat the injury, recovering slowly but preventing worsening.' }, healthImpact: 10, staminaImpact: -15, meritImpact: 5, requiredItems: [{ itemId: 'm1', quantity: 1 }] },
+      { text: { zh: '强忍疼痛继续前进', en: 'Endure pain and continue' }, log: { zh: '你坚持继续前进，但伤势加重，严重影响了后续的行进速度和体力消耗。', en: 'You persist forward, but injury worsens, severely affecting speed and stamina.' }, healthImpact: -20, staminaImpact: -25, meritImpact: -15 }
+    ]
+  },
+  {
+    id: 'e11',
+    title: { zh: '范师傅的救援故事', en: 'Rescue Story of Master Fan' },
+    description: { zh: '你遇到了一位经验丰富的当地救援队员范师傅，他曾参与过十多次秦岭救援。他告诉你："这五年来，鳌太线第一位活着被救下的人就在这里附近被发现。其余人被找到时都已经没了，还有很多连遗体都找不到。"', en: 'You meet an experienced local rescuer Master Fan, who has participated in over ten Qinling rescues. He tells you: "In the past five years, the first person alive rescued on the Aotai trail was found near here. Others were found deceased, and many bodies were never recovered."' },
+    choices: [
+      { text: { zh: '认真听取经验教训，调整行程计划', en: 'Listen carefully and adjust plans' }, log: { zh: '你认真听取了范师傅的忠告，决定更加谨慎地继续行程。', en: 'You listen carefully to Master Fan\'s advice and decide to proceed more cautiously.' }, healthImpact: 0, staminaImpact: -5, meritImpact: 20 },
+      { text: { zh: '礼貌感谢但认为自己准备充分，继续按原计划', en: 'Thank politely but continue as planned' }, log: { zh: '你礼貌地感谢了范师傅，但仍然按照自己的计划继续前进。', en: 'You politely thank Master Fan but continue with your own plan.' }, healthImpact: 0, staminaImpact: 0, meritImpact: 5 }
+    ]
+  },
+  {
+    id: 'e12',
+    title: { zh: '失联者的遗言', en: 'Words of a Missing Hiker' },
+    description: { zh: '在一个避风处，你发现了一本遗落的日记，上面写着："2月8日进山，原以为几天就能穿越鳌太线，没想到山中天气如此多变，我已经迷失了好几天..." 日记到这里戛然而止。', en: 'At a wind-sheltered spot, you find a forgotten diary: "Entered the mountains on Feb 8th, thought I could cross the Aotai trail in a few days, didn\'t expect the weather to be so changeable, I\'ve been lost for days..." The diary ends abruptly.' },
+    choices: [
+      { text: { zh: '将日记妥善保管，或许能帮助后续的救援工作', en: 'Keep the diary safely for future rescue efforts' }, log: { zh: '你小心地保存了这本日记，希望它能帮助救援队了解情况。', en: 'You carefully preserve the diary, hoping it can help rescue teams understand the situation.' }, healthImpact: 0, staminaImpact: -5, meritImpact: 15 },
+      { text: { zh: '匆匆浏览后继续赶路，不能被过去的事耽搁', en: 'Quickly browse and continue' }, log: { zh: '你简单看了看日记就继续前进，认为不应该被过去的事影响自己的行程。', en: 'You quickly look at the diary and continue forward, thinking past events shouldn\'t affect your journey.' }, healthImpact: 0, staminaImpact: 0, meritImpact: -5 }
+    ]
+  },
+  {
+    id: 'e13',
+    title: { zh: '救援队的警示', en: 'Rescue Team Warning' },
+    description: { zh: '你偶遇一支正在执行搜救任务的救援队，他们告诉你："又有5人违规穿越鳌太线，其中2人已无生命体征，还有1人发生坠崖事故。请珍惜生命，遵守规定。"', en: 'You encounter a rescue team on a search mission. They tell you: "Another 5 people illegally crossed the Aotai trail, 2 of whom are deceased, and 1 suffered a cliff fall. Please cherish life and follow regulations."' },
+    choices: [
+      { text: { zh: '深受震撼，重新评估当前的风险', en: 'Deeply shocked, reassess risks' }, log: { zh: '救援队的话让你深刻意识到风险，你决定更加谨慎地评估每一步行动。', en: 'The rescue team\'s words deeply make you aware of the risks, and you decide to evaluate each step more cautiously.' }, healthImpact: 0, staminaImpact: -5, meritImpact: 25 },
+      { text: { zh: '表示感谢但认为只要小心就没问题', en: 'Thank but think caution is sufficient' }, log: { zh: '你感谢救援队的提醒，但内心认为只要足够小心就不会有问题。', en: 'You thank the rescue team but believe that being careful will prevent problems.' }, healthImpact: 0, staminaImpact: 0, meritImpact: 5 }
+    ]
+  },
+  {
+    id: 'e14',
+    title: { zh: '独行者的坚持', en: 'Lone Traveler\'s Persistence' },
+    description: { zh: '你遇到一位资深女驴友，她告诉你："我是踏雪，正在尝试冬季独自穿越鳌太线。我已经在这里困了20多天，但一定要完成这次挑战。"她的精神令人敬佩，但也让人担忧。', en: 'You meet a seasoned female hiker who tells you: "I am Tauxue, attempting a winter solo crossing of the Aotai trail. I\'ve been trapped here for over 20 days, but I must complete this challenge." Her spirit is admirable but concerning.' },
+    choices: [
+      { text: { zh: '劝说她放弃并结伴同行，安全最重要', en: 'Persuade her to give up and travel together' }, log: { zh: '你成功说服了踏雪，两人决定结伴返回安全地带。', en: 'You successfully convince Tauxue, and the two of you decide to return to safety together.' }, healthImpact: 0, staminaImpact: -10, meritImpact: 30 },
+      { text: { zh: '尊重她的决定，但表达关切', en: 'Respect her decision but express concern' }, log: { zh: '你尊重踏雪的决定，但留下了联系方式和部分补给。', en: 'You respect Tauxue\'s decision but leave contact information and some supplies.' }, healthImpact: 0, staminaImpact: -5, meritImpact: 10 }
+    ]
+  },
+  {
+    id: 'e15',
+    title: { zh: '山民的忠告', en: 'Mountain Villager\'s Advice' },
+    description: { zh: '在一处山坳，你遇到了一位老山民，他说："年轻人，鳌太无情，山神不留任性之人。我见过太多人怀着征服自然的雄心而来，却不知敬畏自然的后果。"', en: 'At a mountain pass, you meet an old mountain villager who says: "Young man, Aotai has no mercy, the mountain god does not spare the reckless. I have seen too many people come with ambitions to conquer nature, unaware of the consequences of not revering nature."' },
+    choices: [
+      { text: { zh: '虚心接受忠告，反思自己的行为', en: 'Humbly accept advice and reflect' }, log: { zh: '老山民的话让你陷入沉思，你开始重新审视这次穿越的意义。', en: 'The old villager\'s words make you contemplate, and you begin to reconsider the meaning of this crossing.' }, healthImpact: 0, staminaImpact: -5, meritImpact: 20 },
+      { text: { zh: '礼貌感谢但认为自己准备充分，无需担心', en: 'Thank politely but think prepared enough' }, log: { zh: '你礼貌地感谢了老山民，但内心依然自信满满。', en: 'You politely thank the old villager but remain confident inside.' }, healthImpact: 0, staminaImpact: 0, meritImpact: -5 }
+    ]
+  },
+  {
+    id: 'e16',
+    title: { zh: '偶遇金丝猴群', en: 'Golden Monkey Encounter' },
+    description: { zh: '一群秦岭金丝猴出现在附近的树枝上好奇地打量着你。它们看起来并无恶意，但可能会抢夺你暴露在外的食物。', en: 'A group of Qinling golden monkeys appear on nearby branches, curiously eyeing you. They seem harmless but might steal exposed food.' },
+    choices: [
+      { text: { zh: '保持静止，缓慢后退，避免冲突', en: 'Stay still, retreat slowly' }, log: { zh: '你安静地离开了这片区域，与金丝猴们和平共处。', en: 'You quietly left the area, coexisting peacefully with the golden monkeys.' }, healthImpact: 0, staminaImpact: -5, meritImpact: 10 },
+      { text: { zh: '拿出食物投喂，试图与它们建立友好关系', en: 'Offer food to befriend them' }, log: { zh: '金丝猴们接受了你的善意，但你也损失了一些珍贵的补给。', en: 'The golden monkeys accepted your kindness, but you also lost some precious supplies.' }, healthImpact: 0, staminaImpact: -10, meritImpact: 15, requiredItems: [{ itemId: 'f1', quantity: 1 }] }
+    ]
+  },
+  {
+    id: 'e17',
+    title: { zh: '羚牛踪迹', en: 'Goral Tracks' },
+    description: { zh: '你在雪地上发现了大型动物的足迹，向导手册告诉你这是羚牛的踪迹。羚牛通常温和，但在繁殖季节或感到威胁时会变得极具攻击性。', en: 'You discover large animal tracks in the snow. Your guidebook identifies them as goral tracks. Gorals are typically gentle but can become highly aggressive during mating season or when threatened.' },
+    choices: [
+      { text: { zh: '改变路线，远离这些踪迹', en: 'Change route, avoid tracks' }, log: { zh: '你谨慎地改变了路线，避开潜在的危险。', en: 'You cautiously changed route, avoiding potential danger.' }, healthImpact: 0, staminaImpact: -10, meritImpact: 10 },
+      { text: { zh: '继续前行，保持警惕', en: 'Continue forward, stay alert' }, log: { zh: '你小心地继续前进，幸运地没有遇到羚牛。', en: 'You carefully continued forward, luckily not encountering any gorals.' }, healthImpact: 0, staminaImpact: -5, meritImpact: 5 }
+    ]
+  },
+  {
+    id: 'e18',
+    title: { zh: '雪豹的凝视', en: 'Snow Leopard\'s Stare' },
+    description: { zh: '在一处岩石上，你与一只雪豹四目相对。作为秦岭的顶级掠食者，雪豹很少主动攻击人类，但它的眼神充满了野性的威严。', en: 'On a rocky outcrop, you lock eyes with a snow leopard. As the apex predator of Qinling, snow leopards rarely attack humans, but its gaze is filled with wild majesty.' },
+    choices: [
+      { text: { zh: '避免直视，慢慢退后，不激怒这位山中王者', en: 'Avoid eye contact, retreat slowly' }, log: { zh: '你以恰当的方式表达了对山中王者的尊重，安全离开了现场。', en: 'You respectfully showed deference to the mountain king, safely leaving the scene.' }, healthImpact: 0, staminaImpact: -8, meritImpact: 20 },
+      { text: { zh: '尝试拍照记录这一难得的相遇', en: 'Try to photograph the rare encounter' }, log: { zh: '你试图拍照的行为让雪豹感到威胁，它咆哮一声后消失了。', en: 'Your attempt to photograph startled the snow leopard, which roared and disappeared.' }, healthImpact: 0, staminaImpact: -5, meritImpact: -5 }
     ]
   }
 ];

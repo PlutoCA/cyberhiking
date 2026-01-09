@@ -145,11 +145,81 @@ const App: React.FC = () => {
     return newStatus;
   }, [gameState.season, isNight, hasItem, gameState.currentLandmarkIndex, gameState.merit]);
 
+  const selectWeightedEvent = useCallback(() => {
+    // 根据玩家状态和环境选择合适的事件
+    const currentStatus = gameState.status;
+    const currentWeather = gameState.weather;
+    const currentElevation = LANDMARKS[gameState.currentLandmarkIndex].elevation;
+    const isNight = gameState.time >= 20 || gameState.time < 6;
+    const currentDay = gameState.day;
+    
+    // 根据玩家状态调整事件权重
+    let filteredEvents = [...LOCAL_EVENTS];
+    
+    // 如果体温过低，增加保暖相关事件概率
+    if (currentStatus.bodyTemp < 36.0) {
+      const coldEvent = LOCAL_EVENTS.find(e => e.id === 'e4'); // 遭遇恶劣天气
+      if (coldEvent && Math.random() < 0.4) return coldEvent;
+    }
+    
+    // 如果严重脱水，增加水源相关事件概率
+    if (currentStatus.hydration < 30) {
+      const waterEvent = LOCAL_EVENTS.find(e => e.id === 'e7'); // 水源危机
+      if (waterEvent && Math.random() < 0.4) return waterEvent;
+    }
+    
+    // 如果体力过低，增加伤病相关事件概率
+    if (currentStatus.stamina < 20) {
+      const injuryEvent = LOCAL_EVENTS.find(e => e.id === 'e10'); // 突发伤病
+      if (injuryEvent && Math.random() < 0.3) return injuryEvent;
+    }
+    
+    // 如果在高海拔区域，增加高反相关事件概率
+    if (currentElevation > 3000 && currentStatus.conditions.includes('高反')) {
+      const rescueEvent = LOCAL_EVENTS.find(e => e.id === 'e6'); // 发现失踪驴友
+      if (rescueEvent && Math.random() < 0.35) return rescueEvent;
+    }
+    
+    // 如果是夜晚，增加方向迷失事件概率
+    if (isNight && !hasItem('g4')) { // 没有头灯
+      const lostEvent = LOCAL_EVENTS.find(e => e.id === 'e5'); // 迷失方向
+      if (lostEvent && Math.random() < 0.5) return lostEvent;
+    }
+    
+    // 根据天气调整事件
+    if (currentWeather === WeatherType.BLIZZARD || currentWeather === WeatherType.SNOWY) {
+      const weatherEvent = LOCAL_EVENTS.find(e => e.id === 'e4'); // 遭遇恶劣天气
+      if (weatherEvent && Math.random() < 0.4) return weatherEvent;
+    }
+    
+    // 基于真实事件的触发条件
+    // 根据天数增加经验类事件概率
+    if (currentDay > 3 && Math.random() < 0.25) {
+      const experienceEvent = LOCAL_EVENTS.find(e => ['e11', 'e13', 'e15'].includes(e.id)); // 范师傅、救援队、山民的事件
+      if (experienceEvent) return experienceEvent;
+    }
+    
+    // 如果玩家表现过于自信（高健康值但低谨慎），增加警示事件
+    if (currentStatus.health > 80 && currentStatus.stamina > 70 && currentStatus.conditions.length === 0 && Math.random() < 0.2) {
+      const warningEvent = LOCAL_EVENTS.find(e => ['e12', 'e13', 'e15'].includes(e.id)); // 遗言、救援警示、山民忠告
+      if (warningEvent) return warningEvent;
+    }
+    
+    // 长时间穿越后增加孤独感事件
+    if (currentDay > 5 && Math.random() < 0.2) {
+      const lonelinessEvent = LOCAL_EVENTS.find(e => e.id === 'e14'); // 独行者事件
+      if (lonelinessEvent) return lonelinessEvent;
+    }
+    
+    // 默认随机选择事件
+    return [...filteredEvents].sort(() => Math.random() - 0.5)[0];
+  }, [gameState, hasItem]);
+
   const checkGameOver = useCallback((status: PlayerStatus): { isOver: boolean, message: string } => {
-    if (status.health <= 0) return { isOver: true, message: t.deathReason.health };
-    if (status.bodyTemp < 34.0) return { isOver: true, message: t.deathReason.bodyTemp };
-    if (status.hydration <= 0) return { isOver: true, message: t.deathReason.hydration };
-    if (status.stamina <= 0 && status.health <= 2) return { isOver: true, message: t.deathReason.stamina };
+    if (status.health <= 0) return { isOver: true, message: `${t.deathReason.health} [生命值: ${status.health.toFixed(1)}, 体温: ${status.bodyTemp.toFixed(1)}℃, 水分: ${status.hydration.toFixed(1)}%, 体力: ${status.stamina.toFixed(1)}%]` };
+    if (status.bodyTemp < 34.0) return { isOver: true, message: `${t.deathReason.bodyTemp} [体温: ${status.bodyTemp.toFixed(1)}℃, 生命值: ${status.health.toFixed(1)}, 水分: ${status.hydration.toFixed(1)}%, 体力: ${status.stamina.toFixed(1)}%]` };
+    if (status.hydration <= 0) return { isOver: true, message: `${t.deathReason.hydration} [水分: ${status.hydration.toFixed(1)}%, 生命值: ${status.health.toFixed(1)}, 体温: ${status.bodyTemp.toFixed(1)}℃, 体力: ${status.stamina.toFixed(1)}%]` };
+    if (status.stamina <= 0 && status.health <= 2) return { isOver: true, message: `${t.deathReason.stamina} [体力: ${status.stamina.toFixed(1)}%, 生命值: ${status.health.toFixed(1)}, 体温: ${status.bodyTemp.toFixed(1)}℃, 水分: ${status.hydration.toFixed(1)}%]` };
     return { isOver: false, message: '' };
   }, [t.deathReason]);
 
@@ -162,7 +232,11 @@ const App: React.FC = () => {
   }, []);
 
   const handleRouteChoice = async (option: RouteOption) => {
-    if (gameState.phase !== 'hiking' || gameState.isCamping) return;
+    if (gameState.phase !== 'hiking') return;
+    if (gameState.isCamping) {
+      addLog(`[SYSTEM] 你需要先打包帐篷才能继续前进。点击下方的"收起"按钮。`);
+      return;
+    }
     let newProgress = gameState.progress + 1;
     let nextLandmarkIndex = gameState.currentLandmarkIndex;
     if (newProgress >= 3) {
@@ -200,7 +274,12 @@ const App: React.FC = () => {
       setGameState(p => {
           const newDay = p.day + Math.floor((p.time + option.timeCost) / 24);
           if (isNight && !hasItem('g4')) addLog(`[DANGER] ${t.noHeadlamp}`);
-          return {
+          
+          // 检查是否到达新地标，如果是则添加地标故事
+          const shouldAddStory = nextLandmarkIndex !== p.currentLandmarkIndex;
+          const landmarkStory = shouldAddStory ? triggerLandmarkStory(nextLandmarkIndex) : '';
+          
+          const newState = {
             ...p,
             currentLandmarkIndex: nextLandmarkIndex,
             progress: newProgress,
@@ -210,8 +289,16 @@ const App: React.FC = () => {
             status: nextStatus,
             achievements: settleAchievements({ ...p, status: nextStatus, day: newDay } as GameState)
           };
+          
+          // 如果有地标故事，则添加到日志
+          if (landmarkStory) {
+            setTimeout(() => addLog(landmarkStory), 1000); // 延迟添加地标故事，让玩家先看到路线叙事
+          }
+          
+          return newState;
       });
-      if (Math.random() < 0.25) setCurrentEvent([...LOCAL_EVENTS].sort(() => Math.random() - 0.5)[0]);
+      // 仅在未死亡且未完成游戏的情况下触发随机事件
+      if (Math.random() < 0.25) setCurrentEvent(selectWeightedEvent());
     }
   };
 
@@ -237,6 +324,9 @@ const App: React.FC = () => {
         ...p.status,
         health: Math.max(0, Math.min(100, p.status.health + choice.healthImpact)),
         stamina: Math.max(0, Math.min(100, p.status.stamina + choice.staminaImpact)),
+        bodyTemp: choice.bodyTempImpact ? Math.max(34.0, Math.min(37.2, p.status.bodyTemp + choice.bodyTempImpact)) : p.status.bodyTemp,
+        hydration: choice.hydrationImpact ? Math.max(0, Math.min(100, p.status.hydration + choice.hydrationImpact)) : p.status.hydration,
+        energy: choice.energyImpact ? Math.max(0, Math.min(100, p.status.energy + choice.energyImpact)) : p.status.energy,
         conditions: newConditions
       };
       
@@ -282,7 +372,12 @@ const App: React.FC = () => {
   };
 
   const handleCheckIn = () => {
-    if (gameState.phase !== 'hiking' || gameState.isCamping || hasCheckedInCurrent) return;
+    if (gameState.phase !== 'hiking') return;
+    if (gameState.isCamping) {
+      addLog(`[SYSTEM] 你需要先打包帐篷才能继续打卡。点击下方的"收起"按钮。`);
+      return;
+    }
+    if (hasCheckedInCurrent) return;
     setGameState(p => {
       const newCheckInCount = p.checkInCount + 1;
       const newCheckedInLandmarks = [...p.checkedInLandmarks, currentLandmark.id];
@@ -315,10 +410,14 @@ const App: React.FC = () => {
   };
 
   const handleExplore = () => {
-    if (gameState.phase !== 'hiking' || gameState.isCamping) return;
+    if (gameState.phase !== 'hiking') return;
+    if (gameState.isCamping) {
+      addLog(`[SYSTEM] 你需要先打包帐篷才能探索。点击下方的"收起"按钮。`);
+      return;
+    }
     addLog(`[ACTION] ${t.explore}...`);
     if (Math.random() < 0.3) {
-      setCurrentEvent([...LOCAL_EVENTS].sort(() => Math.random() - 0.5)[0]);
+      setCurrentEvent(selectWeightedEvent());
     } else {
       addLog(`[SYSTEM] 这里的乱石堆中除了积雪和枯草，没有任何发现。`);
     }
@@ -383,6 +482,8 @@ const App: React.FC = () => {
     }
   };
 
+
+
   const startJourney = () => {
     const entries = Object.entries(shoppingCart) as [string, number][];
     const cost = entries.reduce((acc, [id, q]) => acc + (SHOP_ITEMS.find(i => i.id === id)?.cost || 0) * q, 0);
@@ -406,16 +507,75 @@ const App: React.FC = () => {
         else mergedInventory.push(newItem);
     });
 
+    // 添加背景故事和出发日志
+    const storyLogs = [
+      `[STORY] ${gameState.language === 'zh' ? '你站在塘口村的入口处，望着巍峨的秦岭山脉。这条鳌太线被誉为“中华龙脊”，同时也是中国最危险的徒步线路之一。' : 'You stand at the entrance of Tangkou Village, gazing at the majestic Qinling Mountains. This Aotai Trail is known as the "Dragon Spine of China" and also one of the most dangerous hiking routes in the country.'}`,
+      `[STORY] ${gameState.language === 'zh' ? '无数徒步者曾在这里留下足迹，也有不少人永远留在了这里。你检查了一遍装备，深吸一口气，踏上了这条充满未知的道路。' : 'Countless hikers have left their footprints here, and many have remained forever. You check your equipment, take a deep breath, and step onto this road full of unknowns.'}`,
+      `[SYSTEM] ${gameState.language === 'zh' ? '征途开启。秦岭鳌太线：非经允许严禁穿越。' : 'Journey begins. Qinling Aotai Trail: Unauthorized crossing prohibited.'}`
+    ];
+
+    // 自动装备可装备的物品
+    let autoEquippedInventory = [...mergedInventory];
+    let equippedStatus = {...gameState.status};
+    
+    // 创建一个Set来跟踪已装备的装备槽位，避免重复装备相同槽位的装备
+    const equippedSlots = new Set<string>();
+    
+    // 第一遍：处理已装备的物品，将它们的效果应用到状态中
+    for (const item of autoEquippedInventory) {
+      if (item.isEquipped && item.effect) {
+        equippedStatus = item.effect(equippedStatus);
+      }
+    }
+    
+    // 第二遍：自动装备可装备但尚未装备的物品
+    autoEquippedInventory = autoEquippedInventory.map(item => {
+      if (item.isEquippable && item.quantity > 0 && !item.isEquipped) {
+        // 如果该槽位尚未装备，则进行装备
+        const slot = item.equipmentSlot || 'other';
+        if (!equippedSlots.has(slot)) {
+          // 标记为已装备
+          const equippedItem = { ...item, isEquipped: true };
+          
+          // 应用装备效果（仅对一件装备应用效果，因为装备效果不应随数量叠加）
+          if (equippedItem.effect) {
+            equippedStatus = equippedItem.effect(equippedStatus);
+          }
+          
+          // 标记此槽位已装备
+          equippedSlots.add(slot);
+          
+          return equippedItem;
+        }
+      }
+      return item;
+    });
+
     setGameState(p => ({ 
       ...p, 
       phase: 'hiking', 
       gold: p.gold - cost, 
-      inventory: mergedInventory, 
+      inventory: autoEquippedInventory, 
       startWeight: weight, 
-      status: { ...p.status, weight }, 
-      log: [`[SYSTEM] 征途开启。秦岭鳌太线：非经允许严禁穿越。`] 
+      status: { ...equippedStatus, weight }, 
+      log: storyLogs
     }));
   };
+
+  const triggerLandmarkStory = useCallback((landmarkIndex: number) => {
+    const landmark = LANDMARKS[landmarkIndex];
+    const landmarkStories = {
+       0: `[STORY] ${gameState.language === 'zh' ? '塘口村是鳌太线的传统起点，许多徒步者在这里做最后的补给和准备。村里的老人常说："鳌太无情，山神不留任性之人"。' : 'Tangkou Village is the traditional starting point of the Aotai Trail, where many hikers make their final preparations. The elderly villagers often say: "Aotai has no mercy, the mountain god does not spare the reckless."'} Rocket League`,
+       1: `[STORY] ${gameState.language === 'zh' ? '海拔2800米的高度标志着你正式进入了秦岭腹地。这里的空气开始变得稀薄，原始森林展现出原始而神秘的面貌。' : 'At 2800 meters elevation, you officially enter the heart of the Qinling Mountains. The air begins to thin, and the primeval forest reveals its primitive and mysterious appearance.'}`,
+       2: `[STORY] ${gameState.language === 'zh' ? '盆景园以其独特的高山灌丛景观闻名，这里的植物因长期受风雪侵蚀而形成奇特的造型，宛如天然盆景。' : 'Sobing Garden is famous for its unique alpine shrub landscape. The plants here have formed peculiar shapes due to long-term erosion by wind and snow, resembling natural bonsai.'}`,
+       3: `[STORY] ${gameState.language === 'zh' ? '荞麦梁因其形状酷似荞麦而得名，这里是整个鳌太线上最为险峻的地段之一，稍有不慎就可能坠入万丈深渊。' : 'Buckwheat Ridge got its name from its resemblance to buckwheat. This is one of the most dangerous sections of the entire Aotai Trail, where a slight misstep could lead to a fatal fall.'}`,
+       4: `[STORY] ${gameState.language === 'zh' ? '跑马梁是一片广阔的高山草甸，相传古时候有军队在此训练战马。开阔的地势让人一览众山小，但也意味着暴露在恶劣天气中无处可藏。' : 'Paoma Ridge is a vast alpine meadow, said to have been used in ancient times to train war horses. The open terrain offers panoramic views, but also means exposure to harsh weather with nowhere to hide.'}`,
+       5: `[STORY] ${gameState.language === 'zh' ? '拔仙台海拔3767米，是秦岭的最高峰。站在这里，仿佛伸手即可触及天际。但高海拔带来的缺氧和严寒也让这里成为徒步者的终极考验。' : 'Baxiantai stands at 3767 meters, the highest peak of the Qinling Mountains. Standing here, it feels like you can reach the sky. But the oxygen deprivation and severe cold brought by high altitude make this the ultimate test for hikers.'}`,
+       6: `[STORY] ${gameState.language === 'zh' ? '厚畛子镇标志着鳌太线的终点。无数徒步者带着疲惫的身躯和满载回忆的心灵抵达这里，完成了人生中最难忘的旅程之一。' : 'Houzhenzi Town marks the end of the Aotai Trail. Countless hikers arrive here with exhausted bodies and hearts full of memories, completing one of the most unforgettable journeys of their lives.'}`
+     };
+    
+    return landmarkStories[landmarkIndex as keyof typeof landmarkStories] || '';
+  }, [gameState.language]);
 
   const resetToHome = () => {
     setGameState(p => ({
@@ -519,14 +679,14 @@ const App: React.FC = () => {
                       <p className="text-[10px] text-slate-500 leading-tight italic">{item.description[gameState.language]}</p>
                     </div>
                     <div className="flex items-center gap-2 mt-4 bg-black/20 p-1 rounded-xl">
-                      <button onClick={() => updateCart(item.id, -1)} className="w-8 h-8 bg-slate-800 rounded-lg font-black text-xs hover:bg-slate-700 transition-colors">-</button>
-                      <span className="flex-grow text-center font-mono font-bold text-white">{shoppingCart[item.id] || 0}</span>
-                      <button 
-                        onClick={() => updateCart(item.id, 1)} 
-                        className="w-8 h-8 bg-slate-800 rounded-lg font-black text-xs hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                        disabled={!item.isConsumable && (shoppingCart[item.id] || 0) >= 1}
-                      >+</button>
-                    </div>
+                       <button onClick={() => updateCart(item.id, -1)} className="w-8 h-8 bg-slate-800 rounded-lg font-black text-xs hover:bg-slate-700 transition-colors">-</button>
+                       <span className="flex-grow text-center font-mono font-bold text-white">{shoppingCart[item.id] || 0}</span>
+                       <button 
+                         onClick={() => updateCart(item.id, 1)} 
+                         className="w-8 h-8 bg-slate-800 rounded-lg font-black text-xs hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                         disabled={!item.isConsumable && (shoppingCart[item.id] || 0) >= 1}
+                       >+</button>
+                     </div>
                   </div>
                 ))}
               </div>
