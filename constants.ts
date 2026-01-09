@@ -17,70 +17,66 @@ export const ACHIEVEMENTS: Achievement[] = [
 export const LANDMARKS: Landmark[] = [
   { 
     id: 'l1', name: { zh: '塘口村', en: 'Tangkou Village' }, elevation: 1200, 
+    coordinates: { lat: 33.8947, lng: 107.4123 },
     description: { zh: '进山的起点，两侧是郁郁葱葱的林间小道。', en: 'Entrance to the mountain trail.' }, 
+    realInfo: { zh: '塘口村位于陕西省太白县，是鳌太穿越的传统南坡起点。村里有多家客栈提供住宿和物资补给，是徒步者做最后准备的地方。村民常告诫："鳌太无情，山神不留任性之人"。', en: 'Tangkou Village in Taibai County is the traditional southern starting point of the Aotai Trail. Local guesthouses provide final supplies and accommodation.' },
     sceneryKeywords: 'forest path village', 
     imageUrl: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&q=80&w=1200',
     options: [{ id: 'o1', label: { zh: '开始拔高', en: 'Start Ascent' }, risk: 0.02, staminaCost: 5, timeCost: 2, description: { zh: '开始漫长的爬升。', en: 'Begin the long climb.' } }]
   },
   { 
     id: 'l2', name: { zh: '2800峰', en: '2800 Peak' }, elevation: 2800, 
+    coordinates: { lat: 33.9156, lng: 107.4589 },
     description: { zh: '原始森林的边缘，坡度陡峭，空气开始变得清冷。', en: 'Edge of the ancient forest.' }, 
+    realInfo: { zh: '海拔2800米标志着正式进入秦岭腹地。空气开始稀薄，原始森林展现神秘面貌。这是很多徒步者第一晚的露营地，也是身体适应高海拔的关键点。', en: 'At 2800m elevation, you officially enter the Qinling hinterland. Air thins and the primeval forest reveals its mysterious character. First night camping spot for many hikers.' },
     sceneryKeywords: 'steep forest mist', 
     imageUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1200',
     options: [{ id: 'o2', label: { zh: '向山脊推进', en: 'Push to Ridge' }, risk: 0.05, staminaCost: 8, timeCost: 3, description: { zh: '向更高的山脊线迈进。', en: 'Moving towards the ridge line.' } }]
   },
   { 
     id: 'l3', name: { zh: '盆景园', en: 'Sobing Garden' }, elevation: 3100, 
+    coordinates: { lat: 33.9423, lng: 107.5234 },
     description: { zh: '奇松异石，海拔已在3000米之上。', en: 'Ancient pines and strange rocks.' }, 
+    realInfo: { zh: '盆景园以独特的高山灌丛景观闻名。植物因长期受风雪侵蚀形成奇特造型，宛如天然盆景。海拔3200米，已超过树线，风景壮美却充满危险。', en: 'Famous for unique alpine shrubs shaped by years of wind and snow erosion, resembling natural bonsai. At 3200m, above the tree line.' },
     sceneryKeywords: 'alpine pines rocks', 
     imageUrl: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80&w=1200',
     options: [{ id: 'o3', label: { zh: '跨越石海', en: 'Cross Rock Sea' }, risk: 0.10, staminaCost: 12, timeCost: 4, description: { zh: '在巨大的乱石中寻找路径。', en: 'Navigating through massive boulders.' } }]
   },
   { 
     id: 'l4', name: { zh: '荞麦梁', en: 'Buckwheat Ridge' }, elevation: 3300, 
+    coordinates: { lat: 33.9567, lng: 107.5678 },
     description: { zh: '极其险峻的窄脊，风声在耳边咆哮。', en: 'Dangerous razor-thin ridge.' }, 
+    realInfo: { zh: '荞麦梁因形状酷似荞麦得名，是鳌太线最险峻地段之一。山脊狭窄，两侧陡峭悬崖，能见度差时极易迷失方向。多起严重事故发生于此地段。', en: 'Named for its buckwheat-like shape, this is one of the most dangerous sections. Narrow ridge with steep drops on both sides. Multiple serious accidents occurred here.' },
     sceneryKeywords: 'knife ridge gale', 
     imageUrl: 'https://images.unsplash.com/photo-1544198365-f5d60b6d8190?auto=format&fit=crop&q=80&w=1200',
     options: [{ id: 'o4', label: { zh: '贴脊横切', en: 'Ridge Crossing' }, risk: 0.15, staminaCost: 15, timeCost: 5, description: { zh: '全神贯注通过险路。', en: 'Concentrate on the dangerous path.' } }]
   },
   { 
     id: 'l5', name: { zh: '跑马梁', en: 'Paoma Ridge' }, elevation: 3450, 
+    coordinates: { lat: 33.9712, lng: 107.6234 },
     description: { zh: '一望无际的高山荒原，毫无遮挡，失温风险极高。', en: 'Exposed alpine plateau.' }, 
+    realInfo: { zh: '跑马梁是广阔的高山草甸，相传古时军队在此训练战马。开阔地势完全暴露于恶劣天气中，常遭遇狂风暴雪，是失温事故高发区。', en: 'Vast alpine meadow said to be used for training war horses in ancient times. Completely exposed to harsh weather, frequently hit by gales and blizzards. High-risk area for hypothermia.' },
     sceneryKeywords: 'flat ridge grass', 
     imageUrl: 'https://images.unsplash.com/photo-1444492417251-9c84a5fa18e0?auto=format&fit=crop&q=80&w=1200',
     options: [{ id: 'o5', label: { zh: '冲刺最高峰', en: 'Final Sprint' }, risk: 0.10, staminaCost: 18, timeCost: 4, description: { zh: '目标直指拔仙台。', en: 'Targeting Baxiantai.' } }]
   },
   { 
     id: 'l6', name: { zh: '拔仙台', en: 'Baxiantai' }, elevation: 3767, 
+    coordinates: { lat: 33.9550, lng: 107.7600 },
     description: { zh: '秦岭主峰之巅，云海翻腾。', en: 'Summit of the Qinling Mountains.' }, 
+    realInfo: { zh: '拔仙台海拔3767米，秦岭最高峰，鳌太线的最高点。高海拔缺氧和严寒成为终极考验。天气极其恶劣，常年积雪，能见度低。传说八仙在此升天，故名拔仙台。', en: 'At 3767m, Baxiantai is the highest peak of the Qinling Mountains and the highest point of the Aotai Trail. Extreme altitude, oxygen deprivation, and severe cold present the ultimate test. Year-round snow and low visibility.' },
     sceneryKeywords: 'summit cloud sea', 
     imageUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1200',
     options: [{ id: 'o6', label: { zh: '下撤厚畛子', en: 'Descend' }, risk: 0.08, staminaCost: 10, timeCost: 6, description: { zh: '漫长的下山路。', en: 'Long descent.' } }]
   },
   { 
     id: 'l7', name: { zh: '厚畛子', en: 'Houzhenzi' }, elevation: 1100, 
+    coordinates: { lat: 33.8234, lng: 107.9123 },
     description: { zh: '终点站。炊烟袅袅，终于回归人间。', en: 'The finish line village.' }, 
+    realInfo: { zh: '厚畛子镇标志着鳌太线终点。无数徒步者带着疲惫和难忘的回忆抵达这里，完成人生中最艰险的旅程之一。镇上有温暖的客栈和热腾腾的饭菜等待着归来的勇士。', en: 'Houzhenzi town marks the end of the Aotai Trail. Countless hikers arrive here exhausted but fulfilled, having completed one of the most challenging journeys of their lives. Warm guesthouses and hot meals await the returning adventurers.' },
     sceneryKeywords: 'village home lights', 
     imageUrl: 'https://images.unsplash.com/photo-1500382017468-9049fee74a62?auto=format&fit=crop&q=80&w=1200',
     options: []
-  },
-  {
-    id: 'e16',
-    title: { zh: '偶遇金丝猴群', en: 'Golden Monkey Encounter' },
-    description: { zh: '一群秦岭金丝猴出现在附近的树枝上好奇地打量着你。它们看起来并无恶意，但可能会抢夺你暴露在外的食物。', en: 'A group of Qinling golden monkeys appear on nearby branches, curiously eyeing you. They seem harmless but might steal exposed food.' },
-    choices: [
-      { text: { zh: '保持静止，缓慢后退，避免冲突', en: 'Stay still, retreat slowly' }, log: { zh: '你安静地离开了这片区域，与金丝猴们和平共处。', en: 'You quietly left the area, coexisting peacefully with the golden monkeys.' }, healthImpact: 0, staminaImpact: -5, meritImpact: 10 },
-      { text: { zh: '拿出食物投喂，试图与它们建立友好关系', en: 'Offer food to befriend them' }, log: { zh: '金丝猴们接受了你的善意，但你也损失了一些珍贵的补给。', en: 'The golden monkeys accepted your kindness, but you also lost some precious supplies.' }, healthImpact: 0, staminaImpact: -10, meritImpact: 15, requiredItems: [{ itemId: 'f1', quantity: 1 }] }
-    ]
-  },
-  {
-    id: 'e17',
-    title: { zh: '羚牛踪迹', en: 'Goral Tracks' },
-    description: { zh: '你在雪地上发现了大型动物的足迹，向导手册告诉你这是羚牛的踪迹。羚牛通常温和，但在繁殖季节或感到威胁时会变得极具攻击性。', en: 'You discover large animal tracks in the snow. Your guidebook identifies them as goral tracks. Gorals are typically gentle but can become highly aggressive during mating season or when threatened.' },
-    choices: [
-      { text: { zh: '改变路线，远离这些踪迹', en: 'Change route, avoid tracks' }, log: { zh: '你谨慎地改变了路线，避开潜在的危险。', en: 'You cautiously changed route, avoiding potential danger.' }, healthImpact: 0, staminaImpact: -10, meritImpact: 10 },
-      { text: { zh: '继续前行，保持警惕', en: 'Continue forward, stay alert' }, log: { zh: '你小心地继续前进，幸运地没有遇到羚牛。', en: 'You carefully continued forward, luckily not encountering any gorals.' }, healthImpact: 0, staminaImpact: -5, meritImpact: 5 }
-    ]
   }
 ];
 
@@ -163,7 +159,8 @@ export const INITIAL_GAME_STATE: GameState = {
   achievements: ACHIEVEMENTS,
   startWeight: 0,
   isCamping: false,
-  deathCauseChain: []
+  deathCauseChain: [],
+  triggeredEvents: []
 };
 
 export const LOCAL_EVENTS: RandomEvent[] = [

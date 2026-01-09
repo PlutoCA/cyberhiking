@@ -1,0 +1,9 @@
+现在需要给每个landmark添加coordinates字段和realInfo字段
+
+l1 塘口村: coordinates: { lat: 33.8947, lng: 107.4123 }
+l2 2800峰: coordinates: { lat: 33.9156, lng: 107.4589 }
+l3 盆景园: coordinates: { lat: 33.9423, lng: 107.5234 }
+l4 荞麦梁: coordinates: { lat: 33.9567, lng: 107.5678 }
+l5 跑马梁: coordinates: { lat: 33.9712, lng: 107.6234 }
+l6 拔仙台: coordinates: { lat: 33.9550, lng: 107.7600 } (真实坐标)
+l7 厚畛子: coordinates: { lat: 33.8234, lng: 107.9123 }

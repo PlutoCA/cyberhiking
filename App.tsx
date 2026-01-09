@@ -23,7 +23,14 @@ const App: React.FC = () => {
   const [currentEvent, setCurrentEvent] = useState<RandomEvent | null>(null);
   const [showAchievements, setShowAchievements] = useState(false);
   const [activeShopCategory, setActiveShopCategory] = useState<ItemCategory>('food');
-  const [shoppingCart, setShoppingCart] = useState<{[key: string]: number}>({});
+    const [shoppingCart, setShoppingCart] = useState<{ [key: string]: number }>({});
+  
+    // 统一的负重计算函数
+    const calculateWeight = useCallback((inventory: InventoryItem[]): number => {
+      const BASE_WEIGHT = 2.0; // 背包本身重量
+      const itemsWeight = inventory.reduce((acc, i) => acc + (i.weight * i.quantity), 0);
+      return Number((BASE_WEIGHT + itemsWeight).toFixed(2));
+    }, []);
   const [guideLoading, setGuideLoading] = useState(false);
   const logEndRef = useRef<HTMLDivElement>(null);
 
@@ -108,15 +115,16 @@ const App: React.FC = () => {
     if (isNight) tempLoss += 0.9;
 
     if (mode === 'sleep') {
-        const tentBonus = hasItem('g2') ? 0.04 : 1.8; 
-        const bagBonus = hasItem('g3') ? 0.2 : 1.3;
-        const fireHeating = hasItem('g5') ? 3.0 : 0; 
-        const passiveHeating = (hasItem('g2') && hasItem('g3')) ? 0.7 : 0;
+        // 修正：帐篷和睡袋应该减少失温，而不是增加
+        const tentBonus = hasItem('g2') ? 0.3 : 1.0; // 有帐篷减少30%失温
+        const bagBonus = hasItem('g3') ? 0.4 : 1.0;  // 有睡袋减少60%失温
+        const fireHeating = hasItem('g5') ? 0.8 : 0;  // 气罐提供额外保温
+        const passiveHeating = (hasItem('g2') && hasItem('g3')) ? 0.5 : 0; // 帐篷+睡袋组合额外加成
         const finalLoss = (tempLoss * tentBonus * bagBonus);
         const totalGain = (fireHeating + passiveHeating);
         newStatus.bodyTemp += (totalGain - finalLoss) * hours * 0.12;
     } else {
-        const gearBonus = hasItem('g1') ? 0.35 : 1.0;
+        const gearBonus = hasItem('g1') ? 0.35 : 1.0; // 冲锋衣减少65%失温
         newStatus.bodyTemp -= (tempLoss * hours * 0.1 * gearBonus);
     }
 
@@ -146,6 +154,21 @@ const App: React.FC = () => {
   }, [gameState.season, isNight, hasItem, gameState.currentLandmarkIndex, gameState.merit]);
 
   const selectWeightedEvent = useCallback(() => {
+    // 过滤出未触发的事件（减少重复概率）
+    let availableEvents = LOCAL_EVENTS.filter(e => !gameState.triggeredEvents.includes(e.id));
+    
+    // 如果所有事件都触发过，保留最近触发的5个，其他可以重新触发
+    if (availableEvents.length < 5) {
+      const recentEvents = gameState.triggeredEvents.slice(-5);
+      availableEvents = LOCAL_EVENTS.filter(e => !recentEvents.includes(e.id));
+      
+      // 如果还是太少，完全重置
+      if (availableEvents.length === 0) {
+        availableEvents = LOCAL_EVENTS;
+        // 清空历史记录（保留在后续的setGameState中处理）
+      }
+    }
+    
     // 根据玩家状态和环境选择合适的事件
     const currentStatus = gameState.status;
     const currentWeather = gameState.weather;
@@ -153,66 +176,63 @@ const App: React.FC = () => {
     const isNight = gameState.time >= 20 || gameState.time < 6;
     const currentDay = gameState.day;
     
-    // 根据玩家状态调整事件权重
-    let filteredEvents = [...LOCAL_EVENTS];
-    
+    // 紧急事件优先（忽略历史记录）
     // 如果体温过低，增加保暖相关事件概率
     if (currentStatus.bodyTemp < 36.0) {
-      const coldEvent = LOCAL_EVENTS.find(e => e.id === 'e4'); // 遭遇恶劣天气
+      const coldEvent = availableEvents.find(e => e.id === 'e4');
       if (coldEvent && Math.random() < 0.4) return coldEvent;
     }
     
     // 如果严重脱水，增加水源相关事件概率
     if (currentStatus.hydration < 30) {
-      const waterEvent = LOCAL_EVENTS.find(e => e.id === 'e7'); // 水源危机
+      const waterEvent = availableEvents.find(e => e.id === 'e7');
       if (waterEvent && Math.random() < 0.4) return waterEvent;
     }
     
     // 如果体力过低，增加伤病相关事件概率
     if (currentStatus.stamina < 20) {
-      const injuryEvent = LOCAL_EVENTS.find(e => e.id === 'e10'); // 突发伤病
+      const injuryEvent = availableEvents.find(e => e.id === 'e10');
       if (injuryEvent && Math.random() < 0.3) return injuryEvent;
     }
     
     // 如果在高海拔区域，增加高反相关事件概率
     if (currentElevation > 3000 && currentStatus.conditions.includes('高反')) {
-      const rescueEvent = LOCAL_EVENTS.find(e => e.id === 'e6'); // 发现失踪驴友
+      const rescueEvent = availableEvents.find(e => e.id === 'e6');
       if (rescueEvent && Math.random() < 0.35) return rescueEvent;
     }
     
     // 如果是夜晚，增加方向迷失事件概率
-    if (isNight && !hasItem('g4')) { // 没有头灯
-      const lostEvent = LOCAL_EVENTS.find(e => e.id === 'e5'); // 迷失方向
+    if (isNight && !hasItem('g4')) {
+      const lostEvent = availableEvents.find(e => e.id === 'e5');
       if (lostEvent && Math.random() < 0.5) return lostEvent;
     }
     
     // 根据天气调整事件
     if (currentWeather === WeatherType.BLIZZARD || currentWeather === WeatherType.SNOWY) {
-      const weatherEvent = LOCAL_EVENTS.find(e => e.id === 'e4'); // 遭遇恶劣天气
+      const weatherEvent = availableEvents.find(e => e.id === 'e4');
       if (weatherEvent && Math.random() < 0.4) return weatherEvent;
     }
     
     // 基于真实事件的触发条件
-    // 根据天数增加经验类事件概率
     if (currentDay > 3 && Math.random() < 0.25) {
-      const experienceEvent = LOCAL_EVENTS.find(e => ['e11', 'e13', 'e15'].includes(e.id)); // 范师傅、救援队、山民的事件
+      const experienceEvent = availableEvents.find(e => ['e11', 'e13', 'e15'].includes(e.id));
       if (experienceEvent) return experienceEvent;
     }
     
-    // 如果玩家表现过于自信（高健康值但低谨慎），增加警示事件
+    // 如果玩家表现过于自信，增加警示事件
     if (currentStatus.health > 80 && currentStatus.stamina > 70 && currentStatus.conditions.length === 0 && Math.random() < 0.2) {
-      const warningEvent = LOCAL_EVENTS.find(e => ['e12', 'e13', 'e15'].includes(e.id)); // 遗言、救援警示、山民忠告
+      const warningEvent = availableEvents.find(e => ['e12', 'e13', 'e15'].includes(e.id));
       if (warningEvent) return warningEvent;
     }
     
     // 长时间穿越后增加孤独感事件
     if (currentDay > 5 && Math.random() < 0.2) {
-      const lonelinessEvent = LOCAL_EVENTS.find(e => e.id === 'e14'); // 独行者事件
+      const lonelinessEvent = availableEvents.find(e => e.id === 'e14');
       if (lonelinessEvent) return lonelinessEvent;
     }
     
-    // 默认随机选择事件
-    return [...filteredEvents].sort(() => Math.random() - 0.5)[0];
+    // 默认随机选择事件（从未触发的事件中选择）
+    return availableEvents[Math.floor(Math.random() * availableEvents.length)];
   }, [gameState, hasItem]);
 
   const checkGameOver = useCallback((status: PlayerStatus, prevStatus?: PlayerStatus, currentEvent?: RandomEvent): { isOver: boolean, message: string, cause?: string } => {
@@ -344,7 +364,7 @@ const App: React.FC = () => {
       setGameState({ ...gs, achievements: settleAchievements(gs as GameState) } as GameState);
     } else if (isReachedFinalLandmark) {
       // 到达最后一个地标（厚畛子）则游戏胜利
-      const gs = { ...gameState, phase: 'gameover', status: nextStatus, currentLandmarkIndex: nextLandmarkIndex, progress: newProgress, gameMessage: { zh: "厚畛子的灯火就在前方，你终于完成了鳌太穿越！", en: "THE LIGHTS OF HOUZHENZI! MISSION COMPLETE!" } };
+      const gs = { ...gameState, phase: 'gameover', status: nextStatus, currentLandmarkIndex: nextLandmarkIndex, progress: newProgress, gameMessage: { zh: "厚畛子镇的灯火映照在你颤抖的眼眸。你活着从鳌太线走了出来。\n\n秦岭圣山饶恕了你的渺小。但那些再也无法归家的灵魂，永远凝结在3767米的拔仙台。\n\n⛩️ 【圣山之誓】本游戏仅为虚构修行，真实鳌太穿越千倍死寂。2012-2024年58个灵魂永眠于此——他们都曾认为自己能活着回家。秦岭圣山已于2018年下达禁令，但每年仍有挑战者在风雪中消亡。每一具遗骸都在诉说：自然绝不留情。勿以身试法。勿让亲人哭泣。", en: "THE LIGHTS OF HOUZHENZI SHIMMER THROUGH YOUR TEARS. YOU ESCAPED THE AOTAI ALIVE.\n\nThe Sacred Mountain showed mercy to your insignificance. But 58 souls rest eternally at 3767m Baxiantai—all believed they would return.\n\n⛩️ 【OATH TO THE SACRED MOUNTAIN】This is fictional training only. The real Aotai Trail has slaughtered thousands. Between 2012-2024, 58 bodies were recovered—each belonged to someone who thought they would go home. The Sacred Mountain issued a ban in 2018. Yet every year more challengers freeze in the snow. Every skeleton screams the same truth: Nature shows ZERO mercy. Do not test fate. Do not break your family's hearts." } };
       setGameState({ ...gs, achievements: settleAchievements(gs as GameState) } as GameState);
     } else {
       // 检查是否到达新地标
@@ -390,7 +410,11 @@ const App: React.FC = () => {
           return newState;
       });
       // 仅在未死亡且未完成游戏的情况下触发随机事件
-      if (Math.random() < 0.25) setCurrentEvent(selectWeightedEvent());
+      if (Math.random() < 0.25) {
+        const selectedEvent = selectWeightedEvent();
+        setCurrentEvent(selectedEvent);
+        setGameState(q => ({ ...q, triggeredEvents: [...q.triggeredEvents, selectedEvent.id] }));
+      }
     }
   };
 
@@ -399,12 +423,29 @@ const App: React.FC = () => {
     setGameState(p => {
       let newInventory = [...p.inventory];
       
-      // 消耗所需物资
+      // 二次验证并消耗所需物资
       if (choice.requiredItems) {
+        // 先验证是否所有物资都足够
+        const canConsume = choice.requiredItems.every(required => {
+          const item = newInventory.find(i => i.id === required.itemId);
+          return item && item.quantity >= required.quantity;
+        });
+        
+        if (!canConsume) {
+          // 理论上不应该到这里，因为EventDialog已经验证过
+          console.error('物资验证失败，但选择已通过UI验证');
+          return p; // 不执行任何操作
+        }
+        
+        // 消耗物资
         choice.requiredItems.forEach(required => {
           const item = newInventory.find(i => i.id === required.itemId);
-          if (item && item.quantity >= required.quantity) {
+          if (item) {
             item.quantity -= required.quantity;
+            // 记录物资消耗日志
+            const itemName = item.name[p.language];
+            addLog(`[SYSTEM] 消耗了 ${itemName} x${required.quantity}`);
+            
             // 如果数量为0，移除该物品
             if (item.quantity === 0) {
               newInventory = newInventory.filter(i => i.id !== required.itemId);
@@ -419,8 +460,14 @@ const App: React.FC = () => {
           const base = SHOP_ITEMS.find(i => i.id === reward.itemId);
           if (base) {
             const existing = newInventory.find(i => i.id === reward.itemId);
-            if (existing) existing.quantity += reward.quantity;
-            else newInventory.push({ ...base, quantity: reward.quantity });
+            if (existing) {
+              existing.quantity += reward.quantity;
+            } else {
+              newInventory.push({ ...base, quantity: reward.quantity });
+            }
+            // 记录获得物资日志
+            const itemName = base.name[p.language];
+            addLog(`[SYSTEM] 获得了 ${itemName} x${reward.quantity}`);
           }
         });
       }
@@ -439,7 +486,8 @@ const App: React.FC = () => {
         conditions: newConditions
       };
       
-      nextStatus.weight = Number(newInventory.reduce((acc, i) => acc + (i.weight * i.quantity), 2.0).toFixed(2));
+      // 统一由calculateWeight计算负重
+      // 重量将在最终返回时统一更新
       alerts = createStatusAlerts(p.status, nextStatus, p.language);
       const gameOver = checkGameOver(nextStatus, p.status, currentEvent || undefined);
 
@@ -452,11 +500,11 @@ const App: React.FC = () => {
 
       return {
         ...p,
-        status: nextStatus,
         inventory: newInventory,
         merit: p.merit + choice.meritImpact,
         peopleSaved: p.peopleSaved + (choice.meritImpact >= 100 ? 1 : 0),
         log: newLogs,
+        status: { ...nextStatus, weight: calculateWeight(newInventory) },
         achievements: settleAchievements({ ...p, status: nextStatus, merit: p.merit + choice.meritImpact, peopleSaved: p.peopleSaved + (choice.meritImpact >= 100 ? 1 : 0) } as GameState)
       };
     });
@@ -466,6 +514,13 @@ const App: React.FC = () => {
 
   const handleUseItem = (item: InventoryItem) => {
     if (gameState.phase !== 'hiking') return;
+    
+    // 装备不应该被"使用"，它们购买后自动装备并持续生效
+    if (item.isEquippable && !item.isConsumable) {
+      addLog(`[SYSTEM] ${item.name[gameState.language]} 已装备，效果持续生效中`);
+      return;
+    }
+    
     setGameState(p => {
       const invItem = p.inventory.find(i => i.id === item.id);
       if (!invItem || invItem.quantity <= 0) return p;
@@ -476,7 +531,7 @@ const App: React.FC = () => {
 
       return { 
         ...p, 
-        status: { ...newStatus, weight: Number(newInventory.reduce((acc, i) => acc + (i.weight * i.quantity), 2.0).toFixed(2)) }, 
+        status: { ...newStatus, weight: calculateWeight(newInventory) }, 
         inventory: newInventory, 
         log: newLogs 
       };
@@ -529,7 +584,13 @@ const App: React.FC = () => {
     }
     addLog(`[ACTION] ${t.explore}...`);
     if (Math.random() < 0.3) {
-      setCurrentEvent(selectWeightedEvent());
+        const selectedEvent = selectWeightedEvent();
+        setCurrentEvent(selectedEvent);
+        // 记录已触发的事件
+        setGameState(p => ({
+          ...p,
+          triggeredEvents: [...p.triggeredEvents, selectedEvent.id]
+        }));
     } else {
       addLog(`[SYSTEM] 这里的乱石堆中除了积雪和枯草，没有任何发现。`);
     }
@@ -609,12 +670,6 @@ const App: React.FC = () => {
     const entries = Object.entries(shoppingCart) as [string, number][];
     const cost = entries.reduce((acc, [id, q]) => acc + (SHOP_ITEMS.find(i => i.id === id)?.cost || 0) * q, 0);
     
-    // 包含自带物资后的总重计算
-    const currentInvWeight = gameState.inventory.reduce((acc, i) => acc + (i.weight * i.quantity), 0);
-    const weight = entries.reduce((acc, [id, q]) => acc + (SHOP_ITEMS.find(i => i.id === id)?.weight || 0) * q, 2.0 + currentInvWeight);
-    
-    if (cost > gameState.gold || weight > 25) return;
-    
     const items: InventoryItem[] = entries.map(([id, q]) => {
       const base = SHOP_ITEMS.find(i => i.id === id);
       return base ? { ...base, quantity: q } : null;
@@ -627,6 +682,11 @@ const App: React.FC = () => {
         if (existingIdx > -1) mergedInventory[existingIdx].quantity += newItem.quantity;
         else mergedInventory.push(newItem);
     });
+    
+      // 使用统一的负重计算函数
+      const weight = calculateWeight(mergedInventory);
+    
+      if (cost > gameState.gold || weight > 25) return;
 
     // 添加背景故事和出发日志
     const storyLogs = [
@@ -1053,8 +1113,8 @@ const translations: any = {
     achievements: '成就系统',
     achievementList: '荣耀殿堂 (成就)',
     restDesc: '小憩 (体力+20)',
-    failed: '量子通信中断',
-    success: '穿越成功',
+    failed: '山神收割灵魂',
+    success: '活着离开了圣山',
     reboot: '重新进入',
     empty: '行囊空空...',
     gold: '点数',
@@ -1063,13 +1123,13 @@ const translations: any = {
     explore: '搜寻周边',
     guide: '求助向导',
     noHeadlamp: '夜晚光线不足，极其危险！',
-    warning: '【警告】鳌太线属于自然保护区核心区，非经允许严禁穿越。该区域地形极度复杂，气象万变，已造成多人遇难。',
-    background: '你翻越了围栏。现在，你将独自面对荒野的审判。',
+    warning: '【圣山禁地】鳌太线为自然保护区禁区。秦岭山神的领地，非许可严禁涉足。此处已夺58条人命。山不测，人不寿。',
+    background: '你翻越了围栏，踏入了圣山的禁地。现在，秦岭将审判你的每一步。',
     deathReason: {
-      health: '你永远停止在了秦岭的脊梁上。',
-      stamina: '你倒在了乱石缝中。',
-      bodyTemp: '极寒夺走了你的最后一丝意识。',
-      hydration: '干渴摧毁了你的意志。'
+      health: '秦岭吞没了你。你成了这座圣山永恒的子民。',
+      stamina: '体力耗尽的那一刻，你跪倒在乱石之中。山神见证了你的最后呼吸。',
+      bodyTemp: '极寒如刀刃剖开你的灵魂。你在白色的永恒中沉睡了。',
+      hydration: '干渴是最温柔的死法。你在幻觉中微笑着闭上了眼。'
     },
     categories: { food: '食物', water: '水源', gear: '装备', med: '医疗' },
     seasons: { [Season.SPRING]: '春季', [Season.SUMMER]: '夏季', [Season.AUTUMN]: '秋季', [Season.WINTER]: '冬季' }
@@ -1103,9 +1163,9 @@ const translations: any = {
     checkin: 'Check-in',
     achievements: 'Achievements',
     achievementList: 'Hall of Fame',
-    restDesc: 'Rest (+20 Stamina)',
-    failed: 'SIGNAL LOST',
-    success: 'SURVIVED',
+    restDesc: 'Brief respite (+20 Stamina)',
+    failed: 'CONSUMED BY SACRED MOUNTAIN',
+    success: 'BLESSED & RETURNED',
     reboot: 'Reboot',
     empty: 'Empty...',
     gold: 'Credits',
@@ -1113,14 +1173,14 @@ const translations: any = {
     cost: 'Total',
     explore: 'Explore',
     guide: 'Ask Guide',
-    noHeadlamp: 'No headlamp at night! Dangerous!',
-    warning: 'Aotai line is a core protected area. Entry without permit is strictly prohibited. Extreme risks involved.',
-    background: 'You jumped the fence. Now, you face the wild alone.',
+    noHeadlamp: 'Night falls upon the Sacred Mountain. Darkness here devours the unprepared!',
+    warning: '【SACRED FORBIDDEN ZONE】The Aotai Trail is the inner sanctum of the Sacred Mountain. Entry without permission is strictly forbidden. 58+ have perished here. The mountain judges all trespassers.',
+    background: 'You crossed the barrier into the Sacred Mountain\'s forbidden realm. Every step is now judged by eternity.',
     deathReason: {
-      health: 'Life stopped on the ridge.',
-      stamina: 'Exhausted on boulders.',
-      bodyTemp: 'Hypothermia took you.',
-      hydration: 'Dehydration shock.'
+      health: 'The Sacred Mountain absorbed your body. You are now eternal.',
+      stamina: 'You collapsed between ancient stones. The mountain witnessed your last breath.',
+      bodyTemp: 'Hypothermia became your gateway. You sleep in endless white.',
+      hydration: 'Thirst gave you the gentlest death. You smiled as darkness took you.'
     },
     categories: { food: 'Food', water: 'Water', gear: 'Gear', med: 'Meds' },
     seasons: { [Season.SPRING]: 'Spring', [Season.SUMMER]: 'Summer', [Season.AUTUMN]: 'Autumn', [Season.WINTER]: 'Winter' }

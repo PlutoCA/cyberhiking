@@ -40,7 +40,9 @@ export interface Landmark {
   id: string;
   name: { zh: string; en: string };
   elevation: number;
+  coordinates: { lat: number; lng: number }; // GPS坐标
   description: { zh: string; en: string };
+  realInfo?: { zh: string; en: string }; // 真实景点介绍
   options: RouteOption[];
   sceneryKeywords: string;
   imageUrl: string;
@@ -120,4 +122,5 @@ export interface GameState {
   startWeight: number;
   isCamping: boolean;
   deathCauseChain: { zh: string; en: string }[]; // 死亡原因链条
+  triggeredEvents: string[]; // 已触发的事件ID列表，用于减少重复
 }
